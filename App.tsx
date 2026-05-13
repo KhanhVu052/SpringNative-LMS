@@ -1,8 +1,18 @@
 import { StyleSheet, Text, View, Button, ScrollView, FlatList, Image, TouchableOpacity } from 'react-native';
 import { TextInput } from 'react-native';
 import React, { useState } from 'react';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import ViewCourse from './components/courses/ViewCourse';
+import ViewCourseDetails from './components/courses/ViewCourseDetails';
+import CreateCourse from './components/courses/CreateCourse';
+import EditDeleteCourse from './components/courses/EditDeleteCourse';
 
-export default function App() {
+const Stack = createNativeStackNavigator();
+
+function HomeScreen({ navigation }: { navigation: any }) {
   const [activeTab, setActiveTab] = useState('home');
   const [username, setUsername] = useState('Tarek Masud');
   const courses = [
@@ -57,7 +67,7 @@ export default function App() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>All Courses</Text>
-            <TouchableOpacity onPress={() => alert('View all courses')}>
+            <TouchableOpacity onPress={() => navigation.navigate('courses')}>
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>
@@ -91,8 +101,8 @@ export default function App() {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recommendedContainer}>
             {courses.map((course) => (
-              <TouchableOpacity 
-                key={course.id} 
+              <TouchableOpacity
+                key={course.id}
                 style={styles.recommendedCard}
                 onPress={() => alert(`Viewing: ${course.title}`)}
               >
@@ -115,8 +125,8 @@ export default function App() {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {courses.map((course) => (
-              <TouchableOpacity 
-                key={course.id} 
+              <TouchableOpacity
+                key={course.id}
                 style={styles.premiumCard}
                 onPress={() => alert(`Premium Course: ${course.title}`)}
               >
@@ -137,35 +147,51 @@ export default function App() {
             <Text style={styles.chatSubtitle}>Start a conversation now</Text>
           </View>
         </View>
+        <Button title="CreateCourse" onPress={() => navigation.navigate('create-course')} />
+        <Button title="EditDeleteCourse" onPress={() => navigation.navigate('edit-delete-course', { currentItem: { id: 1, name: 'Example Course', description: 'This is an example course' } })} />
       </ScrollView>
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity 
-          style={styles.navItem} 
+        <TouchableOpacity
+          style={styles.navItem}
           onPress={() => setActiveTab('home')}
         >
-          <Text style={styles.navIcon}>🏠</Text>
+          <Ionicons name="home" size={24} color="black" />
           <Text style={styles.navLabel}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('learning')}
         >
-          <Text style={styles.navIcon}>📚</Text>
+          <FontAwesome5 name="book-reader" size={24} color="black" />
           <Text style={styles.navLabel}>Learning</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('profile')}
         >
-          <Text style={styles.navIcon}>👤</Text>
+          <FontAwesome5 name="user-alt" size={24} color="black" />
           <Text style={styles.navLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
     </View>
+  );
+}
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: true }}>
+        <Stack.Screen name="home" component={HomeScreen} />
+        <Stack.Screen name="courses" component={ViewCourse} options={{ title: 'All Courses' }} />
+        <Stack.Screen name="course" component={ViewCourseDetails} options={{ title: 'Course Details' }} />
+        <Stack.Screen name="create-course" component={CreateCourse} options={{ title: 'Create Course' }} />
+        <Stack.Screen name="edit-delete-course" component={EditDeleteCourse} options={{ title: 'Edit Course' }} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
