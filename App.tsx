@@ -9,6 +9,8 @@ import ViewCourse from './components/courses/ViewCourse';
 import ViewCourseDetails from './components/courses/ViewCourseDetails';
 import CreateCourse from './components/courses/CreateCourse';
 import EditDeleteCourse from './components/courses/EditDeleteCourse';
+import Profile from './components/profile/Profile';
+import EditProfile from './components/profile/EditProfile';
 
 const Stack = createNativeStackNavigator();
 
@@ -171,7 +173,10 @@ function HomeScreen({ navigation }: { navigation: any }) {
 
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => setActiveTab('profile')}
+          onPress={() => {
+            setActiveTab('profile');
+            navigation.navigate('profile');
+          }}
         >
           <FontAwesome5 name="user-alt" size={24} color="black" />
           <Text style={styles.navLabel}>Profile</Text>
@@ -190,6 +195,8 @@ export default function App() {
         <Stack.Screen name="course" component={ViewCourseDetails} options={{ title: 'Course Details' }} />
         <Stack.Screen name="create-course" component={CreateCourse} options={{ title: 'Create Course' }} />
         <Stack.Screen name="edit-delete-course" component={EditDeleteCourse} options={{ title: 'Edit Course' }} />
+        <Stack.Screen name="profile" component={Profile} options={{ headerShown: false }} />
+        <Stack.Screen name="edit-profile" component={EditProfile} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

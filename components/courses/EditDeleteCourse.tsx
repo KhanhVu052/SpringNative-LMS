@@ -5,7 +5,6 @@ import {
     TextInput,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
     KeyboardAvoidingView,
     ScrollView,
     Platform,
@@ -13,14 +12,14 @@ import {
 } from 'react-native';
 
 const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) => {
-    // Lấy dữ liệu item được truyền từ màn hình trước đó
+    // Get the item data passed from the previous screen
     const { currentItem } = route.params || {};
 
-    // Khởi tạo state với dữ liệu có sẵn
+    // Initialize state with existing data
     const [itemName, setItemName] = useState('');
     const [description, setDescription] = useState('');
 
-    // Đổ dữ liệu vào form khi Component mount
+    // Populate form fields when the component mounts
     useEffect(() => {
         if (currentItem) {
             setItemName(currentItem.name || '');
@@ -28,36 +27,36 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
         }
     }, [currentItem]);
 
-    // Điều kiện để vô hiệu hóa nút Cập nhật
+    // Condition to disable the Update button
     const isSaveDisabled = itemName.trim() === '';
 
-    // Hàm xử lý Cập nhật
+    // Handler for Update action
     const handleUpdate = () => {
         if (isSaveDisabled) return;
 
-        // Gọi API PUT/PATCH để cập nhật dữ liệu về backend
-        console.log('Dữ liệu cập nhật:', { id: currentItem.id, itemName, description });
-        Alert.alert('Thành công', 'Thông tin đã được cập nhật.');
+        // Call PUT/PATCH API to update data on the backend
+        console.log('Updated data:', { id: currentItem.id, itemName, description });
+        Alert.alert('Success', 'Information has been updated.');
         // navigation.goBack();
     };
 
-    // Hàm xử lý Xóa với hộp thoại xác nhận (Confirmation Dialog)
+    // Handler for Delete action with a confirmation dialog
     const handleDelete = () => {
         Alert.alert(
-            'Xóa mục này?',
-            'Bạn có chắc chắn muốn xóa? Hành động này không thể hoàn tác.',
+            'Delete this item?',
+            'Are you sure you want to delete? This action cannot be undone.',
             [
                 {
-                    text: 'Hủy',
-                    style: 'cancel', // Nút Hủy (màu mặc định)
+                    text: 'Cancel',
+                    style: 'cancel', // Cancel button (default color)
                 },
                 {
-                    text: 'Xóa',
-                    style: 'destructive', // Nút Xóa (iOS sẽ tự động tô màu đỏ)
+                    text: 'Delete',
+                    style: 'destructive', // Delete button (iOS will automatically color it red)
                     onPress: () => {
-                        // Gọi API DELETE để xóa dữ liệu trên backend
-                        console.log('Đã xóa item có ID:', currentItem.id);
-                        Alert.alert('Đã xóa', 'Mục này đã được xóa thành công.');
+                        // Call DELETE API to remove data from the backend
+                        console.log('Deleted item with ID:', currentItem.id);
+                        Alert.alert('Deleted', 'This item has been deleted successfully.');
                         // navigation.goBack();
                     },
                 },
@@ -66,7 +65,7 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
     };
 
     return (
-        <SafeAreaView style={styles.safeArea}>
+        <View style={styles.safeArea}>
             <KeyboardAvoidingView
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -75,29 +74,29 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
                 {/* Header */}
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => {/* navigation.goBack() */ }}>
-                        <Text style={styles.backText}>Trở về</Text>
+                        <Text style={styles.backText}>Back</Text>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Sửa thông tin</Text>
+                    <Text style={styles.headerTitle}>Edit Information</Text>
                     <View style={{ width: 50 }} /> {/* Spacer */}
                 </View>
 
                 {/* Body Form */}
                 <ScrollView contentContainerStyle={styles.formContainer} keyboardShouldPersistTaps="handled">
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Tên mục <Text style={styles.required}>*</Text></Text>
+                        <Text style={styles.label}>Item Name <Text style={styles.required}>*</Text></Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Nhập tên..."
+                            placeholder="Enter name..."
                             value={itemName}
                             onChangeText={setItemName}
                         />
                     </View>
 
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Mô tả</Text>
+                        <Text style={styles.label}>Description</Text>
                         <TextInput
                             style={[styles.input, styles.textArea]}
-                            placeholder="Nhập mô tả..."
+                            placeholder="Enter description..."
                             value={description}
                             onChangeText={setDescription}
                             multiline={true}
@@ -107,26 +106,26 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
                     </View>
                 </ScrollView>
 
-                {/* Footer: Chứa nút Cập nhật và nút Xóa */}
+                {/* Footer: Contains the Update and Delete buttons */}
                 <View style={styles.footer}>
                     <TouchableOpacity
                         style={[styles.updateButton, isSaveDisabled && styles.disabledButton]}
                         onPress={handleUpdate}
                         disabled={isSaveDisabled}
                     >
-                        <Text style={styles.updateButtonText}>Cập nhật thông tin</Text>
+                        <Text style={styles.updateButtonText}>Update Information</Text>
                     </TouchableOpacity>
 
-                    {/* Nút Xóa được thiết kế riêng biệt để tránh bấm nhầm */}
+                    {/* Delete button is styled separately to avoid accidental taps */}
                     <TouchableOpacity
                         style={styles.deleteButton}
                         onPress={handleDelete}
                     >
-                        <Text style={styles.deleteButtonText}>Xóa mục này</Text>
+                        <Text style={styles.deleteButtonText}>Delete This Item</Text>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
     );
 };
 
@@ -165,16 +164,16 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderRadius: 8,
         alignItems: 'center',
-        marginBottom: 12, // Tạo khoảng cách với nút Xóa
+        marginBottom: 12, // Add spacing above the Delete button
     },
     disabledButton: { backgroundColor: '#A0CFFF' },
     updateButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
 
-    // Style riêng cho nút Xóa
+    // Dedicated style for the Delete button
     deleteButton: {
         backgroundColor: '#FFFFFF',
         borderWidth: 1,
-        borderColor: '#FF3B30', // Màu đỏ cảnh báo
+        borderColor: '#FF3B30', // Warning red color
         paddingVertical: 14,
         borderRadius: 8,
         alignItems: 'center',
@@ -183,4 +182,3 @@ const styles = StyleSheet.create({
 });
 
 export default EditItemScreen;
-
