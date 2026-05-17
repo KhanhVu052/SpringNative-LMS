@@ -347,4 +347,18 @@ public class CourseController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    // ---------------- SUBMISSION ENDPOINTS (CHUYỂN TỪ SEMINAR SANG COURSE) ----------------
+
+    @GetMapping("/{courseId}/submissions")
+    public ResponseEntity<List<Map<String, Object>>> getSubmissions(@PathVariable Long courseId) {
+        return ResponseEntity.ok(List.of());
+    }
+
+    @PostMapping("/{courseId}/submissions/link")
+    public ResponseEntity<Map<String, Object>> submitLink(@PathVariable Long courseId, @RequestBody Map<String, Object> request) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Link-Submission");
+        return ResponseEntity.ok(response);
+    }
 }

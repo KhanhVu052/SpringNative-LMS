@@ -9,11 +9,8 @@ import java.util.List;
 @Repository
 public interface StudentSubmissionRepository extends JpaRepository<StudentSubmissionEntity, Long> {
 
-    List<StudentSubmissionEntity> findBySeminarIdOrderBySubmissionTimeDesc(Long seminarId);
-
-    List<StudentSubmissionEntity> findByStudentIdAndSeminarId(Long studentId, Long seminarId);
-
-    List<StudentSubmissionEntity> findBySeminarIdAndSubmissionType(Long seminarId, StudentSubmissionEntity.SubmissionType submissionType);
-
-    long countBySeminarId(Long seminarId);
+    List<StudentSubmissionEntity> findByCourseIdOrderBySubmissionTimeDesc(Long courseId);
+    List<StudentSubmissionEntity> findByStudentIdAndCourseId(Long studentId, Long courseId);
+    List<StudentSubmissionEntity> findByCourseIdAndSubmissionType(Long courseId, StudentSubmissionEntity.SubmissionType submissionType);
+    long countByCourseId(Long courseId);
 }
