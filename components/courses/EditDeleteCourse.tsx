@@ -18,6 +18,7 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
     // Initialize state with existing data
     const [itemName, setItemName] = useState('');
     const [description, setDescription] = useState('');
+    const [submitting, setSubmitting] = useState(false);
 
     // Populate form fields when the component mounts
     useEffect(() => {
@@ -28,36 +29,67 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
     }, [currentItem]);
 
     // Condition to disable the Update button
-    const isSaveDisabled = itemName.trim() === '';
+    const isSaveDisabled = itemName.trim() === '' || submitting;
 
     // Handler for Update action
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
         if (isSaveDisabled) return;
-
-        // Call PUT/PATCH API to update data on the backend
-        console.log('Updated data:', { id: currentItem.id, itemName, description });
-        Alert.alert('Success', 'Information has been updated.');
-        // navigation.goBack();
+        try {
+            setSubmitting(true);
+            const response = await fetch(
+                `http://192.168.0.104:8080/api/courses/${currentItem.id}`,
+                {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: itemName.trim(),
+                        description: description.trim(),
+                    }),
+                }
+            );
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || `Server error: ${response.status}`);
+            }
+            Alert.alert('Success', 'Course updated successfully!', [
+                { text: 'OK', onPress: () => navigation.navigate('courses') },
+            ]);
+        } catch (err: any) {
+            Alert.alert('Error', err.message ?? 'Failed to update course. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     // Handler for Delete action with a confirmation dialog
     const handleDelete = () => {
         Alert.alert(
-            'Delete this item?',
+            'Delete this course?',
             'Are you sure you want to delete? This action cannot be undone.',
             [
-                {
-                    text: 'Cancel',
-                    style: 'cancel', // Cancel button (default color)
-                },
+                { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Delete',
-                    style: 'destructive', // Delete button (iOS will automatically color it red)
-                    onPress: () => {
-                        // Call DELETE API to remove data from the backend
-                        console.log('Deleted item with ID:', currentItem.id);
-                        Alert.alert('Deleted', 'This item has been deleted successfully.');
-                        // navigation.goBack();
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setSubmitting(true);
+                            const response = await fetch(
+                                `http://192.168.0.104:8080/api/courses/${currentItem.id}`,
+                                { method: 'DELETE' }
+                            );
+                            if (!response.ok) {
+                                const errText = await response.text();
+                                throw new Error(errText || `Server error: ${response.status}`);
+                            }
+                            Alert.alert('Deleted', 'Course deleted successfully.', [
+                                { text: 'OK', onPress: () => navigation.navigate('courses') },
+                            ]);
+                        } catch (err: any) {
+                            Alert.alert('Error', err.message ?? 'Failed to delete course. Please try again.');
+                        } finally {
+                            setSubmitting(false);
+                        }
                     },
                 },
             ]
@@ -73,11 +105,11 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
             >
                 {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => {/* navigation.goBack() */ }}>
-                        <Text style={styles.backText}>Back</Text>
+                    <TouchableOpacity onPress={() => navigation.goBack()} disabled={submitting}>
+                        <Text style={[styles.backText, submitting && { opacity: 0.4 }]}>Back</Text>
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Edit Information</Text>
-                    <View style={{ width: 50 }} /> {/* Spacer */}
+                    <View style={{ width: 50 }} />
                 </View>
 
                 {/* Body Form */}
@@ -113,15 +145,18 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
                         onPress={handleUpdate}
                         disabled={isSaveDisabled}
                     >
-                        <Text style={styles.updateButtonText}>Update Information</Text>
+                        <Text style={styles.updateButtonText}>
+                            {submitting ? 'Updating...' : 'Update Information'}
+                        </Text>
                     </TouchableOpacity>
 
                     {/* Delete button is styled separately to avoid accidental taps */}
                     <TouchableOpacity
-                        style={styles.deleteButton}
+                        style={[styles.deleteButton, submitting && { opacity: 0.4 }]}
                         onPress={handleDelete}
+                        disabled={submitting}
                     >
-                        <Text style={styles.deleteButtonText}>Delete This Item</Text>
+                        <Text style={styles.deleteButtonText}>Delete This Course</Text>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>

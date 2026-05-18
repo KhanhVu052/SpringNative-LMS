@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View, Button, ScrollView, FlatList, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, Button, ScrollView, FlatList, Image, TouchableOpacity, SafeAreaView } from 'react-native';
 import { TextInput } from 'react-native';
 import React, { useState } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { NavigationContainer } from '@react-navigation/native';
@@ -11,6 +12,7 @@ import CreateCourse from './components/courses/CreateCourse';
 import EditDeleteCourse from './components/courses/EditDeleteCourse';
 import Profile from './components/profile/Profile';
 import EditProfile from './components/profile/EditProfile';
+import Feather from '@expo/vector-icons/Feather';
 
 const Stack = createNativeStackNavigator();
 
@@ -34,9 +36,6 @@ function HomeScreen({ navigation }: { navigation: any }) {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <TouchableOpacity style={styles.categoryButton}>
-            <Text style={styles.categoryText}>All Category ▼</Text>
-          </TouchableOpacity>
           <TextInput returnKeyType='search' style={styles.searchInput} placeholder="Search here" />
         </View>
 
@@ -56,7 +55,7 @@ function HomeScreen({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Where You Left</Text>
           <View style={styles.progressCard}>
-            <Text style={styles.progressIcon}>🎯</Text>
+            <Feather name="target" size={24} color="#5B67F8" style={styles.progressIcon} />
             <View>
               <Text style={styles.progressTitle}>How to get started</Text>
               <Text style={styles.progressSubtitle}>You can start from where you left</Text>
@@ -65,39 +64,11 @@ function HomeScreen({ navigation }: { navigation: any }) {
           </View>
         </View>
 
-        {/* All Courses */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>All Courses</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('courses')}>
-              <Text style={styles.seeAll}>See all</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.courseGrid}>
-            <View style={styles.courseButton}>
-              <Text style={styles.courseIcon}>📚</Text>
-              <Text style={styles.courseLabel}>Literature</Text>
-            </View>
-            <View style={styles.courseButton}>
-              <Text style={styles.courseIcon}>📊</Text>
-              <Text style={styles.courseLabel}>General math</Text>
-            </View>
-            <View style={styles.courseButton}>
-              <Text style={styles.courseIcon}>💬</Text>
-              <Text style={styles.courseLabel}>Language</Text>
-            </View>
-            <View style={styles.courseButton}>
-              <Text style={styles.courseIcon}>🧬</Text>
-              <Text style={styles.courseLabel}>Biology</Text>
-            </View>
-          </View>
-        </View>
-
         {/* Recommended */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recommended for you</Text>
-            <TouchableOpacity onPress={() => alert('View all recommended courses')}>
+            <TouchableOpacity onPress={() => navigation.navigate('courses')}>
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>
@@ -106,7 +77,7 @@ function HomeScreen({ navigation }: { navigation: any }) {
               <TouchableOpacity
                 key={course.id}
                 style={styles.recommendedCard}
-                onPress={() => alert(`Viewing: ${course.title}`)}
+                onPress={() => navigation.navigate('course', { course })}
               >
                 <View style={styles.courseImagePlaceholder}>{course.image}</View>
                 <Text style={styles.recommendedTitle}>{course.title}</Text>
@@ -121,7 +92,7 @@ function HomeScreen({ navigation }: { navigation: any }) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Premium Courses</Text>
-            <TouchableOpacity onPress={() => alert('View all premium courses')}>
+            <TouchableOpacity onPress={() => navigation.navigate('courses')}>
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>
@@ -130,7 +101,7 @@ function HomeScreen({ navigation }: { navigation: any }) {
               <TouchableOpacity
                 key={course.id}
                 style={styles.premiumCard}
-                onPress={() => alert(`Premium Course: ${course.title}`)}
+                onPress={() => navigation.navigate('course', { course })}
               >
                 <View style={styles.courseImagePlaceholder}>{course.image}</View>
                 <Text style={styles.premiumTitle}>Basic math for class XIII</Text>
@@ -141,16 +112,7 @@ function HomeScreen({ navigation }: { navigation: any }) {
           </ScrollView>
         </View>
 
-        {/* Chat Support */}
-        <View style={styles.chatSupport}>
-          <Text style={styles.chatIcon}>💬</Text>
-          <View>
-            <Text style={styles.chatTitle}>Chat Support</Text>
-            <Text style={styles.chatSubtitle}>Start a conversation now</Text>
-          </View>
-        </View>
         <Button title="CreateCourse" onPress={() => navigation.navigate('create-course')} />
-        <Button title="EditDeleteCourse" onPress={() => navigation.navigate('edit-delete-course', { currentItem: { id: 1, name: 'Example Course', description: 'This is an example course' } })} />
       </ScrollView>
 
       {/* Bottom Navigation */}
@@ -188,17 +150,19 @@ function HomeScreen({ navigation }: { navigation: any }) {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: true }}>
-        <Stack.Screen name="home" component={HomeScreen} />
-        <Stack.Screen name="courses" component={ViewCourse} options={{ title: 'All Courses' }} />
-        <Stack.Screen name="course" component={ViewCourseDetails} options={{ title: 'Course Details' }} />
-        <Stack.Screen name="create-course" component={CreateCourse} options={{ title: 'Create Course' }} />
-        <Stack.Screen name="edit-delete-course" component={EditDeleteCourse} options={{ title: 'Edit Course' }} />
-        <Stack.Screen name="profile" component={Profile} options={{ headerShown: false }} />
-        <Stack.Screen name="edit-profile" component={EditProfile} options={{ headerShown: false }} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: true }}>
+          <Stack.Screen name="home" component={HomeScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="courses" component={ViewCourse} options={{ title: 'All Courses' }} />
+          <Stack.Screen name="course" component={ViewCourseDetails} options={{ title: 'Course Details' }} />
+          <Stack.Screen name="create-course" component={CreateCourse} options={{ title: 'Create Course' }} />
+          <Stack.Screen name="edit-delete-course" component={EditDeleteCourse} options={{ title: 'Edit Course' }} />
+          <Stack.Screen name="profile" component={Profile} options={{ headerShown: false }} />
+          <Stack.Screen name="edit-profile" component={EditProfile} options={{ headerShown: false }} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
 

@@ -1,24 +1,95 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ScrollView } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ViewCourseDetails from './ViewCourseDetails';
+import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Network from 'expo-network';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+const EMOJIS = ['🔵', '🟣', '🟠', '🟢', '🔴', '🟡'];
 
-const Stack = createNativeStackNavigator();
+type Course = {
+    id: string;
+    title: string;
+    instructor: string;
+    hours: string;
+    lessons: number;
+    image: string;
+};
+
+type RootStackParamList = {
+    course: { course: Course };
+};
 
 export default function ViewCourse() {
-    const navigation = useNavigation();
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [searchText, setSearchText] = useState('');
-    
-    const courses = [
-        { id: '1', title: 'Basic math for class XIII', instructor: 'John Smith', hours: '1.15', lessons: 12, image: '🔵' },
-        { id: '2', title: 'Basic math for class XIII', instructor: 'John Smith', hours: '1.15', lessons: 12, image: '🟣' },
-        { id: '3', title: 'Basic math for class XIII', instructor: 'John Smith', hours: '1.15', lessons: 12, image: '🟠' },
-        { id: '4', title: 'Basic math for class XIII', instructor: 'John Smith', hours: '1.15', lessons: 12, image: '🔵' },
-        { id: '5', title: 'Basic math for class XIII', instructor: 'John Smith', hours: '1.15', lessons: 12, image: '🟣' },
-        { id: '6', title: 'Basic math for class XIII', instructor: 'John Smith', hours: '1.15', lessons: 12, image: '🟠' },
-    ];
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [deviceIp, setDeviceIp] = useState('');
+
+    // Network.getIpAddressAsync().then(ip => {
+    //     if (ip) setDeviceIp(ip);
+    //     console.log('deviceIp', deviceIp);
+    // });
+    // useEffect(() => {
+    //     Network.getIpAddressAsync().then(ip => {
+    //         if (ip) setDeviceIp(ip);
+    //         console.log('deviceIp', deviceIp);
+    //     });
+    // }, []);
+
+    // useEffect(() => {
+    //     const getIp = async () => {
+    //         try {
+    //             const ip = await Network.getIpAddressAsync();
+    //             setDeviceIp(ip);
+    //             // Log trực tiếp biến 'ip' vừa lấy được để kiểm tra
+    //             console.log('IP lấy được từ hệ thống:', ip);
+    //         } catch (e) {
+    //             console.error('Lỗi khi lấy IP:', e);
+    //         }
+    //     };
+
+    //     getIp();
+    // }, []);
+
+    // // Theo dõi khi deviceIp thay đổi thực sự
+    // useEffect(() => {
+    //     if (deviceIp) {
+    //         console.log('State deviceIp đã cập nhật:', deviceIp);
+    //     }
+    // }, [deviceIp]);
+    const fetchCourses = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await fetch(`http://192.168.0.104:8080/api/courses`);
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            const data = await response.json();
+            // Map API response to the shape the UI expects
+            const mapped: Course[] = data.map((item: any, index: number) => ({
+                id: String(item.id ?? index),
+                title: item.title ?? item.name ?? 'Untitled Course',
+                instructor: item.instructor ?? item.instructorName ?? 'Unknown',
+                hours: String(item.hours ?? item.duration ?? '0'),
+                lessons: Number(item.lessons ?? item.lessonCount ?? 0),
+                image: EMOJIS[index % EMOJIS.length],
+            }));
+            setCourses(mapped);
+        } catch (err: any) {
+            setError(err.message ?? 'Failed to load courses');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchCourses();
+        }, [])
+    );
 
     const filteredCourses = courses.filter(course =>
         course.title.toLowerCase().includes(searchText.toLowerCase())
@@ -28,11 +99,11 @@ export default function ViewCourse() {
         <View style={styles.container}>
             {/* Search Bar */}
             <View style={styles.searchContainer}>
-                <Text style={styles.searchIcon}>🔍</Text>
+                <FontAwesome5 name="search" size={24} color="black" />
                 <TextInput
                     style={styles.searchInput}
                     returnKeyType='search'
-                    placeholder="Popular English course"
+                    placeholder="Type your search here ..."
                     value={searchText}
                     onChangeText={setSearchText}
                     placeholderTextColor="#999"
@@ -40,37 +111,65 @@ export default function ViewCourse() {
             </View>
 
             {/* Result Text */}
-            <Text style={styles.resultText}>Result 25 course "English"</Text>
+            <Text style={styles.resultText}>
+                {loading ? 'Loading courses...' : `Result ${filteredCourses.length} course`}
+            </Text>
+
+            {/* Loading */}
+            {loading && (
+                <View style={styles.centeredState}>
+                    <ActivityIndicator size="large" color="#6366F1" />
+                    <Text style={styles.stateText}>Fetching courses...</Text>
+                </View>
+            )}
+
+            {/* Error */}
+            {!loading && error && (
+                <View style={styles.centeredState}>
+                    <Text style={styles.errorIcon}>⚠️</Text>
+                    <Text style={styles.errorText}>{error}</Text>
+                    <TouchableOpacity style={styles.retryButton} onPress={fetchCourses}>
+                        <Text style={styles.retryText}>Retry</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* Course Grid */}
-            <FlatList
-                data={filteredCourses}
-                keyExtractor={(item) => item.id}
-                numColumns={2}
-                columnWrapperStyle={styles.columnWrapper}
-                renderItem={({ item: course }) => (
-                    <TouchableOpacity 
-                        style={styles.courseCard}
-                        onPress={() => alert('Course details coming soon!')}
+            {!loading && !error && (
+                <FlatList
+                    data={filteredCourses}
+                    keyExtractor={(item) => item.id}
+                    numColumns={2}
+                    columnWrapperStyle={styles.columnWrapper}
+                    renderItem={({ item: course }) => (
+                        <TouchableOpacity
+                            style={styles.courseCard}
+                            onPress={() => navigation.navigate('course', { course })}
                         >
-                        <View style={styles.courseImagePlaceholder}>
-                            <Text style={styles.courseImage}>{course.image}</Text>
-                            <View style={styles.playButton}>
-                                <Text style={styles.playIcon}>▶</Text>
+                            <View style={styles.courseImagePlaceholder}>
+                                <Text style={styles.courseImage}>{course.image}</Text>
+                                <View style={styles.playButton}>
+                                    <Text style={styles.playIcon}>▶</Text>
+                                </View>
                             </View>
-                        </View>
-                        <View style={styles.courseInfo}>
-                            <Text style={styles.courseTitle}>{course.title}</Text>
-                            <View style={styles.instructorRow}>
-                                <Text style={styles.instructorIcon}>👨‍🏫</Text>
-                                <Text style={styles.instructor}>{course.instructor}</Text>
+                            <View style={styles.courseInfo}>
+                                <Text style={styles.courseTitle}>{course.title}</Text>
+                                <View style={styles.instructorRow}>
+                                    <Text style={styles.instructorIcon}>👨‍🏫</Text>
+                                    <Text style={styles.instructor}>{course.instructor}</Text>
+                                </View>
+                                <Text style={styles.courseDetails}>{course.hours} hours • {course.lessons} Lesson</Text>
                             </View>
-                            <Text style={styles.courseDetails}>{course.hours} hours • {course.lessons} Lesson</Text>
+                        </TouchableOpacity>
+                    )}
+                    scrollEnabled={true}
+                    ListEmptyComponent={
+                        <View style={styles.centeredState}>
+                            <Text style={styles.stateText}>No courses found.</Text>
                         </View>
-                    </TouchableOpacity>
-                )}
-                scrollEnabled={true}
-            />
+                    }
+                />
+            )}
         </View>
     );
 }
@@ -170,5 +269,38 @@ const styles = StyleSheet.create({
     courseDetails: {
         fontSize: 11,
         color: '#999',
+    },
+    centeredState: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 60,
+    },
+    stateText: {
+        marginTop: 12,
+        fontSize: 14,
+        color: '#999',
+    },
+    errorIcon: {
+        fontSize: 40,
+        marginBottom: 8,
+    },
+    errorText: {
+        fontSize: 14,
+        color: '#e53935',
+        textAlign: 'center',
+        marginHorizontal: 32,
+        marginBottom: 16,
+    },
+    retryButton: {
+        backgroundColor: '#6366F1',
+        paddingHorizontal: 24,
+        paddingVertical: 10,
+        borderRadius: 20,
+    },
+    retryText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 14,
     },
 });

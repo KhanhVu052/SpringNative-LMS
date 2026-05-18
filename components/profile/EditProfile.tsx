@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Modal,
   FlatList,
   Platform,
+  ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -132,22 +134,69 @@ function DropdownSelect({
   );
 }
 
+const BASE_URL = 'http://192.168.0.104:8080';
+// TODO: replace with the actual logged-in user's ID
+const USER_ID = 1;
+
 /* ── Main screen ── */
 export default function EditProfile({ navigation }: EditProfileProps) {
-  const [name, setName] = useState('Jamson Smith');
-  const [phone, setPhone] = useState('Jamson Smith');
-  const [email, setEmail] = useState('Jamson Smith');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [gender, setGender] = useState('');
-  const [institute, setInstitute] = useState('University of hulu, United States');
+  const [institute, setInstitute] = useState('');
   const [education, setEducation] = useState('');
+  const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        setFetchError(null);
+        const res = await fetch(`${BASE_URL}/api/users/${USER_ID}`);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const data = await res.json();
+        setName(data.name ?? data.username ?? data.fullName ?? '');
+        setPhone(data.phone ?? data.phoneNumber ?? '');
+        setEmail(data.email ?? '');
+        setGender(data.gender ?? '');
+        setInstitute(data.institute ?? data.school ?? data.organization ?? '');
+        setEducation(data.education ?? data.educationLevel ?? '');
+      } catch (err: any) {
+        setFetchError(err.message ?? 'Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleUpdate = () => {
     // TODO: wire to API
+    alert('Profile updated successfully!');
     navigation.goBack();
   };
 
   return (
-    <View style={styles.screen}>
+    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={10}>
+      {/* Loading overlay */}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#5B67F8" />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      )}
+
+      {/* Fetch error banner */}
+      {!loading && fetchError && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>{fetchError}</Text>
+        </View>
+      )}
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -178,22 +227,9 @@ export default function EditProfile({ navigation }: EditProfileProps) {
           <FloatingInput label="Name" value={name} onChangeText={setName} />
           <FloatingInput label="Phone Number" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
           <FloatingInput label="Email" value={email} onChangeText={setEmail} keyboardType="email-address" />
-
-          <DropdownSelect
-            label="Student Gender"
-            value={gender}
-            options={genderOptions}
-            onSelect={(opt) => setGender(opt.value)}
-          />
-
-          <FloatingInput label="Institute Name" value={institute} onChangeText={setInstitute} />
-
-          <DropdownSelect
-            label="Education Level"
-            value={education}
-            options={educationOptions}
-            onSelect={(opt) => setEducation(opt.value)}
-          />
+          <FloatingInput label="Current Password" value={password} onChangeText={setPassword} keyboardType="default" />
+          <FloatingInput label="New Password" value={newPassword} onChangeText={setNewPassword} keyboardType="default" />
+          <FloatingInput label="Confirm New Password" value={confirmPassword} onChangeText={setConfirmPassword} keyboardType="default" />
         </View>
 
         {/* Update button */}
@@ -201,7 +237,7 @@ export default function EditProfile({ navigation }: EditProfileProps) {
           <Text style={styles.updateText}>Update</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -300,6 +336,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.4,
+  },
+  /* ── Loading ── */
+  loadingOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0F2FB',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#888',
+  },
+  /* ── Error banner ── */
+  errorBanner: {
+    backgroundColor: '#FFEBEE',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginHorizontal: 20,
+    marginTop: 8,
+    borderRadius: 8,
+  },
+  errorBannerText: {
+    color: '#c62828',
+    fontSize: 13,
+    textAlign: 'center',
   },
 });
 

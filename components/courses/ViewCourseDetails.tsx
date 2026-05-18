@@ -1,9 +1,38 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useRoute } from '@react-navigation/native';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useRoute, RouteProp } from '@react-navigation/native';
+
+type CourseParam = { id: string; title: string; instructor: string; hours: string; lessons: number; image: string };
+type RootStackParamList = { course: { course: CourseParam } };
+
+const BASE_URL = 'http://192.168.0.104:8080';
+
 export default function ViewCourseDetails({ navigation }: { navigation: any }) {
-    const route = useRoute();
+    const route = useRoute<RouteProp<RootStackParamList, 'course'>>();
+    const course = route.params?.course;
+
+    const [description, setDescription] = useState<string | null>(null);
+    const [descLoading, setDescLoading] = useState(false);
+    const [descError, setDescError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!course?.id) return;
+        const fetchDetails = async () => {
+            try {
+                setDescLoading(true);
+                setDescError(null);
+                const res = await fetch(`${BASE_URL}/api/courses/${course.id}`);
+                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+                const data = await res.json();
+                setDescription(data.description ?? '');
+            } catch (err: any) {
+                setDescError(err.message ?? 'Failed to load description');
+            } finally {
+                setDescLoading(false);
+            }
+        };
+        fetchDetails();
+    }, [course?.id]);
 
     const chapters = [
         { id: '1', title: 'Introductions', hours: 2, minutes: 18, lessons: 12 },
@@ -17,12 +46,24 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Course Image */}
                 <View style={styles.imageContainer}>
-                    <Text style={styles.coursImage}>🔵</Text>
+                    <Text style={styles.coursImage}>{course?.image ?? '🔵'}</Text>
                 </View>
 
                 {/* Course Title */}
                 <View style={styles.titleSection}>
-                    <Text style={styles.courseTitle}>Basic English for Class XIII</Text>
+                    <Text style={styles.courseTitle}>{course?.title ?? 'Course Details'}</Text>
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => navigation.navigate('edit-delete-course', {
+                            currentItem: {
+                                id: course?.id,
+                                name: course?.title ?? '',
+                                description: description ?? '',
+                            }
+                        })}
+                    >
+                        <Text style={styles.editButtonText}>Edit Information</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Course Stats */}
@@ -43,9 +84,15 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
 
                 {/* Description */}
                 <View style={styles.descriptionSection}>
-                    <Text style={styles.descriptionText}>
-                        It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem ipsum.
-                    </Text>
+                    {descLoading ? (
+                        <ActivityIndicator size="small" color="#6366F1" />
+                    ) : descError ? (
+                        <Text style={styles.descriptionError}>{descError}</Text>
+                    ) : (
+                        <Text style={styles.descriptionText}>
+                            {description || 'No description available.'}
+                        </Text>
+                    )}
                 </View>
 
                 {/* Chapters */}
@@ -95,6 +142,20 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: '700',
         color: '#000',
+        marginBottom: 12,
+    },
+    editButton: {
+        alignSelf: 'flex-start',
+        backgroundColor: '#6366F1',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 8,
+        justifyContent: 'center',
+    },
+    editButtonText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
     },
     statsContainer: {
         flexDirection: 'row',
@@ -124,6 +185,10 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
         lineHeight: 20,
+    },
+    descriptionError: {
+        fontSize: 14,
+        color: '#e53935',
     },
     chaptersSection: {
         paddingHorizontal: 16,

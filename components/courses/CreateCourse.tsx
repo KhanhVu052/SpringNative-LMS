@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import * as Network from 'expo-network';
 import {
     View,
     Text,
@@ -8,24 +9,52 @@ import {
     KeyboardAvoidingView,
     ScrollView,
     Platform,
-    Alert
+    Alert,
+    ActivityIndicator,
 } from 'react-native';
 
 const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
-    // Quản lý state cho các trường nhập liệu
     const [itemName, setItemName] = useState('');
     const [description, setDescription] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const [deviceIp, setDeviceIp] = useState('192.168.0.100');
 
-    // Kiểm tra điều kiện disable nút Lưu
-    const isSaveDisabled = itemName.trim() === '';
+    // useEffect(() => {
+    //     Network.getIpAddressAsync().then(ip => {
+    //         if (ip !== null) setDeviceIp(ip);
+    //         console.log('deviceIp', deviceIp);
+    //     });
+    // }, []);
 
-    const handleSave = () => {
+    const isSaveDisabled = itemName.trim() === '' || submitting;
+
+    const handleSave = async () => {
         if (isSaveDisabled) return;
 
-        // Xử lý logic gọi API gửi dữ liệu về backend (ví dụ: Spring Boot) ở đây
-        Alert.alert('Thành công', `Đã thêm: ${itemName}`);
+        try {
+            setSubmitting(true);
+            const response = await fetch(`http://192.168.0.104:8080/api/courses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: itemName.trim(),
+                    description: description.trim(),
+                }),
+            });
 
-        // navigation.goBack(); // Quay lại màn hình trước đó
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || `Server error: ${response.status}`);
+            }
+
+            Alert.alert('Success', 'Course created successfully!', [
+                { text: 'OK', onPress: () => navigation.navigate('courses') },
+            ]);
+        } catch (err: any) {
+            Alert.alert('Error', err.message ?? 'Failed to create course. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -35,25 +64,27 @@ const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
             >
-                {/* Phần Header */}
+                {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => {/* navigation.goBack() */ }}>
-                        <Text style={styles.cancelText}>Cancel</Text>
+                    <TouchableOpacity onPress={() => navigation.goBack()} disabled={submitting}>
+                        <Text style={[styles.cancelText, submitting && styles.disabledText]}>Cancel</Text>
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Add new course</Text>
-                    <TouchableOpacity
-                        onPress={handleSave}
-                        disabled={isSaveDisabled}>
-                        <Text style={styles.cancelText}>Save</Text>
+                    <TouchableOpacity onPress={handleSave} disabled={isSaveDisabled}>
+                        {submitting ? (
+                            <ActivityIndicator size="small" color="#6366F1" />
+                        ) : (
+                            <Text style={[styles.saveText, isSaveDisabled && styles.disabledText]}>Save</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
 
-                {/* Phần Body: ScrollView giúp cuộn khi nhập liệu nhiều */}
+                {/* Body */}
                 <ScrollView
                     contentContainerStyle={styles.formContainer}
-                    keyboardShouldPersistTaps="handled" // Cho phép bấm ra ngoài để ẩn bàn phím
+                    keyboardShouldPersistTaps="handled"
                 >
-                    {/* Trường nhập Tên mục */}
+                    {/* Course Name */}
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Course name<Text style={styles.required}>*</Text></Text>
                         <TextInput
@@ -61,11 +92,12 @@ const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
                             placeholder="Enter course name..."
                             value={itemName}
                             onChangeText={setItemName}
-                            autoFocus={true} // Tự động mở bàn phím khi vào màn hình
+                            autoFocus={true}
+                            editable={!submitting}
                         />
                     </View>
 
-                    {/* Trường nhập Mô tả */}
+                    {/* Description */}
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Description</Text>
                         <TextInput
@@ -75,11 +107,11 @@ const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
                             onChangeText={setDescription}
                             multiline={true}
                             numberOfLines={4}
-                            textAlignVertical="top" // Đẩy text lên top trên Android
+                            textAlignVertical="top"
+                            editable={!submitting}
                         />
                     </View>
                 </ScrollView>
-
             </KeyboardAvoidingView>
         </KeyboardAvoidingView>
     );
@@ -106,6 +138,14 @@ const styles = StyleSheet.create({
     cancelText: {
         fontSize: 16,
         color: '#666666',
+    },
+    saveText: {
+        fontSize: 16,
+        color: '#6366F1',
+        fontWeight: '600',
+    },
+    disabledText: {
+        opacity: 0.4,
     },
     headerTitle: {
         fontSize: 18,

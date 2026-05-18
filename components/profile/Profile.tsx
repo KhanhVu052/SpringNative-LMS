@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -18,8 +19,38 @@ interface ProfileProps {
   navigation: any;
 }
 
+const BASE_URL = 'http://192.168.0.104:8080';
+// TODO: replace with the actual logged-in user's ID (e.g. from auth context)
+const USER_ID = 1;
+
 export default function Profile({ navigation }: ProfileProps) {
   const [activeTab, setActiveTab] = useState('profile');
+
+  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
+  const [userError, setUserError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setUserLoading(true);
+        setUserError(null);
+        const res = await fetch(`${BASE_URL}/api/users/${USER_ID}`);
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const data = await res.json();
+        setUser({
+          name: data.name ?? data.username ?? data.fullName ?? 'Unknown',
+          email: data.email ?? '',
+          role: data.role ?? data.grade ?? data.position ?? '',
+        });
+      } catch (err: any) {
+        setUserError(err.message ?? 'Failed to load profile');
+      } finally {
+        setUserLoading(false);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const badges = [
     { id: '1', emoji: '🥈', label: '1st' },
@@ -57,8 +88,17 @@ export default function Profile({ navigation }: ProfileProps) {
 
         {/* Name and Grade */}
         <View style={styles.nameSection}>
-          <Text style={styles.nameText}>Mr. James Smith</Text>
-          <Text style={styles.gradeText}>12th Grade</Text>
+          {userLoading ? (
+            <ActivityIndicator size="small" color="#4361EE" />
+          ) : userError ? (
+            <Text style={styles.errorText}>{userError}</Text>
+          ) : (
+            <>
+              <Text style={styles.nameText}>{user?.name ?? '—'}</Text>
+              {!!user?.email && <Text style={styles.gradeText}>{user.email}</Text>}
+              {!!user?.role && <Text style={styles.gradeText}>{user.role}</Text>}
+            </>
+          )}
         </View>
 
         {/* Stats Cards */}
@@ -213,6 +253,11 @@ const styles = StyleSheet.create({
   gradeText: {
     fontSize: 14,
     color: '#888',
+    marginTop: 2,
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#e53935',
   },
 
   /* ── Stats ── */
@@ -293,13 +338,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e8e8e8',
     paddingVertical: 12,
-    paddingBottom: 20,
-    paddingHorizontal: 32,
+    paddingBottom: 16,
   },
   navItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
   },
   navLabel: {
     fontSize: 12,
