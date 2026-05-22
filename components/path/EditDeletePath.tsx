@@ -8,42 +8,48 @@ import {
     KeyboardAvoidingView,
     ScrollView,
     Platform,
-    Alert
+    Alert,
 } from 'react-native';
 
-const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) => {
-    // Get the item data passed from the previous screen
-    const { currentItem } = route.params || {};
+const BASE_URL = 'http://10.0.2.2:8080';
 
-    // Initialize state with existing data
-    const [itemName, setItemName] = useState('');
+const EditDeletePath = ({ route, navigation }: { route: any; navigation: any }) => {
+    const { courseId, pathId, currentPath } = route.params || {};
+
+    const [level, setLevel] = useState('');
     const [description, setDescription] = useState('');
+    const [overview, setOverview] = useState('');
+    const [points, setPoints] = useState('');
+    const [durationWeeks, setDurationWeeks] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
-    // Populate form fields when the component mounts
     useEffect(() => {
-        if (currentItem) {
-            setItemName(currentItem.name || '');
-            setDescription(currentItem.description || '');
+        if (currentPath) {
+            setLevel(currentPath.level || '');
+            setDescription(currentPath.description || '');
+            setOverview(currentPath.overview || '');
+            setPoints(String(currentPath.points ?? ''));
+            setDurationWeeks(String(currentPath.durationWeeks ?? ''));
         }
-    }, [currentItem]);
+    }, [currentPath]);
 
-    // Condition to disable the Update button
-    const isSaveDisabled = itemName.trim() === '' || submitting;
+    const isSaveDisabled = level.trim() === '' || submitting;
 
-    // Handler for Update action
     const handleUpdate = async () => {
         if (isSaveDisabled) return;
         try {
             setSubmitting(true);
             const response = await fetch(
-                `http://10.0.2.2:8080/api/courses/${currentItem.id}`,
+                `${BASE_URL}/api/courses/${courseId}/paths/${pathId}`,
                 {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name: itemName.trim(),
+                        level: level.trim(),
                         description: description.trim(),
+                        overview: overview.trim(),
+                        points: points ? parseInt(points, 10) : 0,
+                        durationWeeks: durationWeeks ? parseInt(durationWeeks, 10) : 0,
                     }),
                 }
             );
@@ -51,20 +57,19 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
                 const errText = await response.text();
                 throw new Error(errText || `Server error: ${response.status}`);
             }
-            Alert.alert('Success', 'Course updated successfully!', [
-                { text: 'OK', onPress: () => navigation.navigate('my-courses') },
+            Alert.alert('Success', 'Learning path updated successfully!', [
+                { text: 'OK', onPress: () => navigation.goBack() },
             ]);
         } catch (err: any) {
-            Alert.alert('Error', err.message ?? 'Failed to update course. Please try again.');
+            Alert.alert('Error', err.message ?? 'Failed to update. Please try again.');
         } finally {
             setSubmitting(false);
         }
     };
 
-    // Handler for Delete action with a confirmation dialog
     const handleDelete = () => {
         Alert.alert(
-            'Delete this course?',
+            'Delete this learning path?',
             'Are you sure you want to delete? This action cannot be undone.',
             [
                 { text: 'Cancel', style: 'cancel' },
@@ -75,18 +80,18 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
                         try {
                             setSubmitting(true);
                             const response = await fetch(
-                                `http://10.0.2.2:8080/api/courses/${currentItem.id}`,
+                                `${BASE_URL}/api/courses/${courseId}/paths/${pathId}`,
                                 { method: 'DELETE' }
                             );
                             if (!response.ok) {
                                 const errText = await response.text();
                                 throw new Error(errText || `Server error: ${response.status}`);
                             }
-                            Alert.alert('Deleted', 'Course deleted successfully.', [
-                                { text: 'OK', onPress: () => navigation.navigate('my-courses') },
+                            Alert.alert('Deleted', 'Learning path deleted successfully.', [
+                                { text: 'OK', onPress: () => navigation.goBack() },
                             ]);
                         } catch (err: any) {
-                            Alert.alert('Error', err.message ?? 'Failed to delete course. Please try again.');
+                            Alert.alert('Error', err.message ?? 'Failed to delete. Please try again.');
                         } finally {
                             setSubmitting(false);
                         }
@@ -108,19 +113,32 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
                     <TouchableOpacity onPress={() => navigation.goBack()} disabled={submitting}>
                         <Text style={[styles.backText, submitting && { opacity: 0.4 }]}>Back</Text>
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Edit Information</Text>
+                    <Text style={styles.headerTitle}>Edit Learning Path</Text>
                     <View style={{ width: 50 }} />
                 </View>
 
                 {/* Body Form */}
                 <ScrollView contentContainerStyle={styles.formContainer} keyboardShouldPersistTaps="handled">
                     <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Item Name <Text style={styles.required}>*</Text></Text>
+                        <Text style={styles.label}>Level <Text style={styles.required}>*</Text></Text>
                         <TextInput
                             style={styles.input}
-                            placeholder="Enter name..."
-                            value={itemName}
-                            onChangeText={setItemName}
+                            placeholder="e.g. Beginner, Intermediate, Advanced"
+                            value={level}
+                            onChangeText={setLevel}
+                        />
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Overview</Text>
+                        <TextInput
+                            style={[styles.input, styles.textArea]}
+                            placeholder="Enter overview..."
+                            value={overview}
+                            onChangeText={setOverview}
+                            multiline={true}
+                            numberOfLines={3}
+                            textAlignVertical="top"
                         />
                     </View>
 
@@ -136,9 +154,32 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
                             textAlignVertical="top"
                         />
                     </View>
+
+                    <View style={styles.rowGroup}>
+                        <View style={styles.halfInput}>
+                            <Text style={styles.label}>Points</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="0"
+                                value={points}
+                                onChangeText={setPoints}
+                                keyboardType="numeric"
+                            />
+                        </View>
+                        <View style={styles.halfInput}>
+                            <Text style={styles.label}>Duration (weeks)</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="0"
+                                value={durationWeeks}
+                                onChangeText={setDurationWeeks}
+                                keyboardType="numeric"
+                            />
+                        </View>
+                    </View>
                 </ScrollView>
 
-                {/* Footer: Contains the Update and Delete buttons */}
+                {/* Footer */}
                 <View style={styles.footer}>
                     <TouchableOpacity
                         style={[styles.updateButton, isSaveDisabled && styles.disabledButton]}
@@ -146,17 +187,16 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
                         disabled={isSaveDisabled}
                     >
                         <Text style={styles.updateButtonText}>
-                            {submitting ? 'Updating...' : 'Update Information'}
+                            {submitting ? 'Updating...' : 'Update Learning Path'}
                         </Text>
                     </TouchableOpacity>
 
-                    {/* Delete button is styled separately to avoid accidental taps */}
                     <TouchableOpacity
                         style={[styles.deleteButton, submitting && { opacity: 0.4 }]}
                         onPress={handleDelete}
                         disabled={submitting}
                     >
-                        <Text style={styles.deleteButtonText}>Delete This Course</Text>
+                        <Text style={styles.deleteButtonText}>Delete This Path</Text>
                     </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
@@ -180,6 +220,14 @@ const styles = StyleSheet.create({
     headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333333' },
     formContainer: { padding: 16 },
     inputGroup: { marginBottom: 20 },
+    rowGroup: {
+        flexDirection: 'row',
+        gap: 12,
+        marginBottom: 20,
+    },
+    halfInput: {
+        flex: 1,
+    },
     label: { fontSize: 14, fontWeight: '600', color: '#333333', marginBottom: 8 },
     required: { color: '#E53935' },
     input: {
@@ -199,16 +247,14 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderRadius: 8,
         alignItems: 'center',
-        marginBottom: 12, // Add spacing above the Delete button
+        marginBottom: 12,
     },
     disabledButton: { backgroundColor: '#A0CFFF' },
     updateButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
-
-    // Dedicated style for the Delete button
     deleteButton: {
         backgroundColor: '#FFFFFF',
         borderWidth: 1,
-        borderColor: '#FF3B30', // Warning red color
+        borderColor: '#FF3B30',
         paddingVertical: 14,
         borderRadius: 8,
         alignItems: 'center',
@@ -216,4 +262,4 @@ const styles = StyleSheet.create({
     deleteButtonText: { color: '#FF3B30', fontSize: 16, fontWeight: 'bold' },
 });
 
-export default EditItemScreen;
+export default EditDeletePath;

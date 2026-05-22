@@ -134,7 +134,7 @@ function DropdownSelect({
   );
 }
 
-const BASE_URL = 'http://192.168.0.104:8080';
+const BASE_URL = 'http://10.0.2.2:8080';
 // TODO: replace with the actual logged-in user's ID
 const USER_ID = 1;
 
@@ -259,6 +259,7 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 16,
   },
 
   /* ── Avatar ── */

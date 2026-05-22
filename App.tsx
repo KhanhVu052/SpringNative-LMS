@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View, Button, ScrollView, FlatList, Image, TouchableOpacity, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, Button, ScrollView, FlatList, Image, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { TextInput } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -13,17 +13,59 @@ import EditDeleteCourse from './components/courses/EditDeleteCourse';
 import Profile from './components/profile/Profile';
 import EditProfile from './components/profile/EditProfile';
 import Feather from '@expo/vector-icons/Feather';
+import MyCourse from './components/courses/MyCourse';
+import LearningPath from './components/path/LearningPath';
+import EditDeletePath from './components/path/EditDeletePath';
+import CreatePath from './components/path/CreatePath';
+import CreateLesson from './components/lesson/CreateLesson';
+import LessonDetail from './components/lesson/LessonDetail';
 
 const Stack = createNativeStackNavigator();
+
+const EMOJIS = ['🔵', '🟣', '🟠', '🟢', '🔴', '🟡'];
+
+type Course = {
+  id: string;
+  title: string;
+  instructor: string;
+  hours: string;
+  lessons: number;
+  image: string;
+};
 
 function HomeScreen({ navigation }: { navigation: any }) {
   const [activeTab, setActiveTab] = useState('home');
   const [username, setUsername] = useState('Tarek Masud');
-  const courses = [
-    { id: '1', title: 'Basic English for Class XIII', lessons: 28, instructor: 'Smith J.', image: '🔵' },
-    { id: '2', title: 'General Knowledge', lessons: 28, instructor: 'Smith J.', image: '🟣' },
-    { id: '3', title: 'Introduction to Programming', lessons: 28, instructor: 'Smith J.', image: '�' },
-  ];
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://10.0.2.2:8080/api/courses');
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        const data = await response.json();
+        const mapped: Course[] = data.map((item: any, index: number) => ({
+          id: String(item.id ?? index),
+          title: item.name || item.title || 'Untitled Course',
+          instructor: item.instructor || item.instructorName || 'Unknown',
+          hours: String(item.hours ?? item.duration ?? '0'),
+          lessons: Number(item.lessons ?? item.lessonCount ?? 0),
+          image: EMOJIS[index % EMOJIS.length],
+        }));
+        setCourses(mapped);
+      } catch (err: any) {
+        console.error('Failed to fetch courses:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
+
+  const recommendedCourses = courses.slice(0, 5);
+  const premiumCourses = courses.slice(5, 10).length > 0 ? courses.slice(5, 10) : courses.slice(0, 5);
 
   return (
     <View style={styles.mainContainer}>
@@ -72,20 +114,26 @@ function HomeScreen({ navigation }: { navigation: any }) {
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recommendedContainer}>
-            {courses.map((course) => (
-              <TouchableOpacity
-                key={course.id}
-                style={styles.recommendedCard}
-                onPress={() => navigation.navigate('course', { course })}
-              >
-                <View style={styles.courseImagePlaceholder}>{course.image}</View>
-                <Text style={styles.recommendedTitle}>{course.title}</Text>
-                <Text style={styles.instructor}>By {course.instructor}</Text>
-                <Text style={styles.courseDetails}>17 Files • 40 Mins</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {loading ? (
+            <ActivityIndicator size="small" color="#6366F1" style={{ marginVertical: 20 }} />
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recommendedContainer}>
+              {recommendedCourses.map((course) => (
+                <TouchableOpacity
+                  key={course.id}
+                  style={styles.recommendedCard}
+                  onPress={() => navigation.navigate('course', { course })}
+                >
+                  <View style={styles.courseImagePlaceholder}>
+                    <Text style={{ fontSize: 40 }}>{course.image}</Text>
+                  </View>
+                  <Text style={styles.recommendedTitle}>{course.title}</Text>
+                  <Text style={styles.instructor}>By {course.instructor}</Text>
+                  <Text style={styles.courseDetails}>{course.hours} hours • {course.lessons} Lessons</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         {/* Premium Courses */}
@@ -96,23 +144,31 @@ function HomeScreen({ navigation }: { navigation: any }) {
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {courses.map((course) => (
-              <TouchableOpacity
-                key={course.id}
-                style={styles.premiumCard}
-                onPress={() => navigation.navigate('course', { course })}
-              >
-                <View style={styles.courseImagePlaceholder}>{course.image}</View>
-                <Text style={styles.premiumTitle}>Basic math for class XIII</Text>
-                <Text style={styles.instructor}>By John Smith</Text>
-                <Text style={styles.courseDetails}>1.15 hours • 12 Lesson</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          {loading ? (
+            <ActivityIndicator size="small" color="#6366F1" style={{ marginVertical: 20 }} />
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {premiumCourses.map((course) => (
+                <TouchableOpacity
+                  key={course.id}
+                  style={styles.premiumCard}
+                  onPress={() => navigation.navigate('course', { course })}
+                >
+                  <View style={styles.courseImagePlaceholder}>
+                    <Text style={{ fontSize: 40 }}>{course.image}</Text>
+                  </View>
+                  <Text style={styles.premiumTitle}>{course.title}</Text>
+                  <Text style={styles.instructor}>By {course.instructor}</Text>
+                  <Text style={styles.courseDetails}>{course.hours} hours • {course.lessons} Lessons</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
-
-        <Button title="CreateCourse" onPress={() => navigation.navigate('create-course')} />
+        <View>
+          <Button title="CreateCourse" onPress={() => navigation.navigate('create-course')} />
+          <Button title="MyCourse" onPress={() => navigation.navigate('my-courses')} />
+        </View>
       </ScrollView>
 
       {/* Bottom Navigation */}
@@ -123,14 +179,6 @@ function HomeScreen({ navigation }: { navigation: any }) {
         >
           <Ionicons name="home" size={24} color="black" />
           <Text style={styles.navLabel}>Home</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('learning')}
-        >
-          <FontAwesome5 name="book-reader" size={24} color="black" />
-          <Text style={styles.navLabel}>Learning</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -154,12 +202,18 @@ export default function App() {
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: true }}>
           <Stack.Screen name="home" component={HomeScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="courses" component={ViewCourse} options={{ title: 'All Courses' }} />
-          <Stack.Screen name="course" component={ViewCourseDetails} options={{ title: 'Course Details' }} />
-          <Stack.Screen name="create-course" component={CreateCourse} options={{ title: 'Create Course' }} />
-          <Stack.Screen name="edit-delete-course" component={EditDeleteCourse} options={{ title: 'Edit Course' }} />
+          <Stack.Screen name="courses" component={ViewCourse} options={{ headerShown: false }} />
+          <Stack.Screen name="course" component={ViewCourseDetails} options={{ headerShown: false }} />
+          <Stack.Screen name="create-course" component={CreateCourse} options={{ headerShown: false }} />
+          <Stack.Screen name="edit-delete-course" component={EditDeleteCourse} options={{ headerShown: false }} />
           <Stack.Screen name="profile" component={Profile} options={{ headerShown: false }} />
           <Stack.Screen name="edit-profile" component={EditProfile} options={{ headerShown: false }} />
+          <Stack.Screen name="my-courses" component={MyCourse} options={{ headerShown: false }} />
+          <Stack.Screen name="learning-paths" component={LearningPath} options={{ headerShown: false }} />
+          <Stack.Screen name="edit-delete-path" component={EditDeletePath} options={{ headerShown: false }} />
+          <Stack.Screen name="create-path" component={CreatePath} options={{ headerShown: false }} />
+          <Stack.Screen name="create-lesson" component={CreateLesson} options={{ headerShown: false }} />
+          <Stack.Screen name="lesson-detail" component={LessonDetail} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
@@ -170,6 +224,7 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: '#fff',
+    paddingTop: 40,
   },
   container: {
     flex: 1,

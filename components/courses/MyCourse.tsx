@@ -2,8 +2,10 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import * as Network from 'expo-network';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { Ionicons } from '@expo/vector-icons';
+
 const EMOJIS = ['🔵', '🟣', '🟠', '🟢', '🔴', '🟡'];
 
 type Course = {
@@ -17,48 +19,19 @@ type Course = {
 
 type RootStackParamList = {
     course: { course: Course };
+    profile: undefined;
+    home: undefined;
 };
 
 export default function ViewCourse() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const [activeTab, setActiveTab] = useState('home');
+    const [username, setUsername] = useState('Tarek Masud');
     const [searchText, setSearchText] = useState('');
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [deviceIp, setDeviceIp] = useState('');
 
-    // Network.getIpAddressAsync().then(ip => {
-    //     if (ip) setDeviceIp(ip);
-    //     console.log('deviceIp', deviceIp);
-    // });
-    // useEffect(() => {
-    //     Network.getIpAddressAsync().then(ip => {
-    //         if (ip) setDeviceIp(ip);
-    //         console.log('deviceIp', deviceIp);
-    //     });
-    // }, []);
-
-    // useEffect(() => {
-    //     const getIp = async () => {
-    //         try {
-    //             const ip = await Network.getIpAddressAsync();
-    //             setDeviceIp(ip);
-    //             // Log trực tiếp biến 'ip' vừa lấy được để kiểm tra
-    //             console.log('IP lấy được từ hệ thống:', ip);
-    //         } catch (e) {
-    //             console.error('Lỗi khi lấy IP:', e);
-    //         }
-    //     };
-
-    //     getIp();
-    // }, []);
-
-    // // Theo dõi khi deviceIp thay đổi thực sự
-    // useEffect(() => {
-    //     if (deviceIp) {
-    //         console.log('State deviceIp đã cập nhật:', deviceIp);
-    //     }
-    // }, [deviceIp]);
     const fetchCourses = async () => {
         try {
             setLoading(true);
@@ -97,6 +70,9 @@ export default function ViewCourse() {
 
     return (
         <View style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.userName}>John Doe</Text>
+            </View>
             {/* Search Bar */}
             <View style={styles.searchContainer}>
                 <FontAwesome5 name="search" size={24} color="black" />
@@ -112,7 +88,7 @@ export default function ViewCourse() {
 
             {/* Result Text */}
             <Text style={styles.resultText}>
-                {loading ? 'Loading courses...' : `Result ${filteredCourses.length} course`}
+                {loading ? 'Loading courses...' : `My Courses`}
             </Text>
 
             {/* Loading */}
@@ -126,7 +102,7 @@ export default function ViewCourse() {
             {/* Error */}
             {!loading && error && (
                 <View style={styles.centeredState}>
-                    <Text style={styles.errorIcon}>⚠️</Text>
+                    <FontAwesome name="warning" style={styles.errorIcon} size={24} color="yellow" />
                     <Text style={styles.errorText}>{error}</Text>
                     <TouchableOpacity style={styles.retryButton} onPress={fetchCourses}>
                         <Text style={styles.retryText}>Retry</Text>
@@ -169,6 +145,30 @@ export default function ViewCourse() {
                     }
                 />
             )}
+            <View style={styles.bottomNav}>
+                <TouchableOpacity
+                    style={styles.navItem}
+                    onPress={() => {
+                        setActiveTab('home');
+                        navigation.navigate('home');
+                    }}
+                >
+                    <Ionicons name="home" size={24} color="black" />
+                    <Text style={styles.navLabel}>Home</Text>
+                </TouchableOpacity>
+
+
+                <TouchableOpacity
+                    style={styles.navItem}
+                    onPress={() => {
+                        setActiveTab('profile');
+                        navigation.navigate('profile');
+                    }}
+                >
+                    <FontAwesome5 name="user-alt" size={24} color="black" />
+                    <Text style={styles.navLabel}>Profile</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 }
@@ -178,6 +178,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
         paddingTop: 16,
+    },
+    header: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
+    greeting: {
+        fontSize: 14,
+        color: '#666',
+    },
+    userName: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#000',
     },
     searchContainer: {
         flexDirection: 'row',
@@ -297,5 +311,31 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '600',
         fontSize: 14,
+    },
+    bottomNav: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderTopWidth: 1,
+        borderTopColor: '#e0e0e0',
+        paddingVertical: 12,
+        paddingBottom: 16,
+    },
+    navItem: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    navIcon: {
+        fontSize: 28,
+        marginBottom: 4,
+    },
+    navIconActive: {
+        fontSize: 28,
+    },
+    navLabel: {
+        fontSize: 12,
+        color: '#666',
+        marginTop: 4,
     },
 });

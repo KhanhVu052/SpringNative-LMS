@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useRoute, RouteProp } from '@react-navigation/native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Button } from 'react-native';
+import { useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 type CourseParam = { id: string; title: string; instructor: string; hours: string; lessons: number; image: string };
 type RootStackParamList = { course: { course: CourseParam } };
 
-const BASE_URL = 'http://192.168.0.104:8080';
+const BASE_URL = 'http://10.0.2.2:8080';
 
 export default function ViewCourseDetails({ navigation }: { navigation: any }) {
     const route = useRoute<RouteProp<RootStackParamList, 'course'>>();
@@ -15,8 +16,12 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
     const [descLoading, setDescLoading] = useState(false);
     const [descError, setDescError] = useState<string | null>(null);
 
+    const [paths, setPaths] = useState<{ id: number; level: string; overview: string }[]>([]);
+    const [pathsLoading, setPathsLoading] = useState(false);
+
     useEffect(() => {
         if (!course?.id) return;
+
         const fetchDetails = async () => {
             try {
                 setDescLoading(true);
@@ -31,54 +36,77 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
                 setDescLoading(false);
             }
         };
+
         fetchDetails();
     }, [course?.id]);
 
-    const chapters = [
-        { id: '1', title: 'Introductions', hours: 2, minutes: 18, lessons: 12 },
-        { id: '2', title: 'English for Everyday', hours: 2, minutes: 18, lessons: 12 },
-        { id: '3', title: 'Sentences', hours: 2, minutes: 18, lessons: 12 },
-        { id: '4', title: 'Parts of Speech', hours: 2, minutes: 18, lessons: 12 },
-    ];
+    const fetchPaths = useCallback(async () => {
+        if (!course?.id) return;
+        try {
+            setPathsLoading(true);
+            const res = await fetch(`${BASE_URL}/api/courses/${course.id}/paths`);
+            if (!res.ok) throw new Error(`Server error: ${res.status}`);
+            const data = await res.json();
+            const mapped = (Array.isArray(data) ? data : []).map((item: any) => ({
+                id: item.id ?? 0,
+                level: item.level || 'N/A',
+                overview: item.overview || '',
+            }));
+            setPaths(mapped);
+        } catch (err: any) {
+            console.error('Failed to fetch paths:', err.message);
+        } finally {
+            setPathsLoading(false);
+        }
+    }, [course?.id]);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchPaths();
+        }, [fetchPaths])
+    );
+
 
     return (
         <View style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Course Image */}
                 <View style={styles.imageContainer}>
+                    <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => navigation.goBack()}
+                    >
+                        <Ionicons name="arrow-back" size={24} color="#fff" />
+                    </TouchableOpacity>
                     <Text style={styles.coursImage}>{course?.image ?? '🔵'}</Text>
                 </View>
 
                 {/* Course Title */}
                 <View style={styles.titleSection}>
                     <Text style={styles.courseTitle}>{course?.title ?? 'Course Details'}</Text>
-                    <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => navigation.navigate('edit-delete-course', {
-                            currentItem: {
-                                id: course?.id,
-                                name: course?.title ?? '',
-                                description: description ?? '',
-                            }
-                        })}
-                    >
-                        <Text style={styles.editButtonText}>Edit Information</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Course Stats */}
-                <View style={styles.statsContainer}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statIcon}>👥</Text>
-                        <Text style={styles.statText}>25.6k</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statIcon}>⏱️</Text>
-                        <Text style={styles.statText}>5h 34min</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statIcon}>⭐</Text>
-                        <Text style={styles.statText}>4.7 ratings</Text>
+                    <View style={styles.editButton}>
+                        <TouchableOpacity
+                            style={styles.editButtonContent}
+                            onPress={() => navigation.navigate('edit-delete-course', {
+                                currentItem: {
+                                    id: course?.id,
+                                    name: course?.title ?? '',
+                                    description: description ?? '',
+                                }
+                            })}
+                        >
+                            <Text style={styles.editButtonText}>Edit Information</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.editButtonContent}
+                            onPress={() => navigation.navigate('create-path', {
+                                course: {
+                                    id: course?.id,
+                                }
+                            })}
+                        >
+                            <Text style={styles.editButtonText}>Create Path</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -95,20 +123,42 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
                     )}
                 </View>
 
-                {/* Chapters */}
+                {/* Learning Paths */}
                 <View style={styles.chaptersSection}>
                     <View style={styles.chaptersHeader}>
-                        <Text style={styles.chaptersTitle}>Chapters</Text>
-                        <Text style={styles.chaptersCount}>14 in total</Text>
+                        <Text style={styles.chaptersTitle}>Learning Paths</Text>
+                        <Text style={styles.chaptersCount}>
+                            {pathsLoading ? 'Loading...' : `${paths.length} in total`}
+                        </Text>
                     </View>
 
-                    {chapters.map((chapter) => (
-                        <TouchableOpacity key={chapter.id} style={styles.chapterCard}>
+                    {pathsLoading && (
+                        <ActivityIndicator size="small" color="#6366F1" style={{ marginVertical: 12 }} />
+                    )}
+
+                    {!pathsLoading && paths.length === 0 && (
+                        <Text style={{ fontSize: 14, color: '#999', textAlign: 'center', paddingVertical: 12 }}>
+                            No learning paths available.
+                        </Text>
+                    )}
+
+                    {!pathsLoading && paths.map((p) => (
+                        <TouchableOpacity
+                            key={p.id}
+                            style={styles.chapterCard}
+                            onPress={() => navigation.navigate('learning-paths', {
+                                courseId: course?.id,
+                                pathId: p.id,
+                                courseName: course?.title ?? 'Course',
+                            })}
+                        >
                             <View style={styles.chapterInfo}>
-                                <Text style={styles.chapterTitle}>{chapter.title}</Text>
-                                <Text style={styles.chapterDetails}>
-                                    {chapter.hours} Hrs {chapter.minutes} Min • {chapter.lessons} Lesson
-                                </Text>
+                                <Text style={styles.chapterTitle}>{p.level}</Text>
+                                {!!p.overview && (
+                                    <Text style={styles.chapterDetails} numberOfLines={2}>
+                                        {p.overview}
+                                    </Text>
+                                )}
                             </View>
                             <Text style={styles.chapterArrow}>›</Text>
                         </TouchableOpacity>
@@ -130,6 +180,19 @@ const styles = StyleSheet.create({
         backgroundColor: '#ddd',
         justifyContent: 'center',
         alignItems: 'center',
+        position: 'relative',
+    },
+    backButton: {
+        position: 'absolute',
+        top: 40,
+        left: 16,
+        zIndex: 10,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     coursImage: {
         fontSize: 100,
@@ -137,6 +200,8 @@ const styles = StyleSheet.create({
     titleSection: {
         paddingHorizontal: 16,
         paddingVertical: 16,
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     courseTitle: {
         fontSize: 24,
@@ -145,12 +210,16 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     editButton: {
-        alignSelf: 'flex-start',
         backgroundColor: '#6366F1',
         paddingHorizontal: 16,
         paddingVertical: 8,
+        marginHorizontal: 12,
+        flexDirection: 'row',
         borderRadius: 8,
-        justifyContent: 'center',
+    },
+    editButtonContent: {
+        flex: 1,
+        alignItems: 'center',
     },
     editButtonText: {
         color: '#FFFFFF',

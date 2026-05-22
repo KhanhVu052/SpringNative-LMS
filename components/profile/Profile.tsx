@@ -19,7 +19,7 @@ interface ProfileProps {
   navigation: any;
 }
 
-const BASE_URL = 'http://192.168.0.104:8080';
+const BASE_URL = 'http://10.0.2.2:8080';
 // TODO: replace with the actual logged-in user's ID (e.g. from auth context)
 const USER_ID = 1;
 
@@ -147,19 +147,21 @@ export default function Profile({ navigation }: ProfileProps) {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('learning')}
-        >
-          <FontAwesome5
-            name="book-reader"
-            size={24}
-            color={activeTab === 'learning' ? '#4361EE' : '#999'}
-          />
-          <Text style={[styles.navLabel, activeTab === 'learning' && styles.navLabelActive]}>
-            Learning
-          </Text>
-        </TouchableOpacity>
+        {user?.role?.toLowerCase() === 'student' && (
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('learning')}
+          >
+            <FontAwesome5
+              name="book-reader"
+              size={24}
+              color={activeTab === 'learning' ? '#4361EE' : '#999'}
+            />
+            <Text style={[styles.navLabel, activeTab === 'learning' && styles.navLabelActive]}>
+              Learning
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Profile FAB */}
         <TouchableOpacity

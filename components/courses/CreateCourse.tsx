@@ -17,7 +17,6 @@ const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
     const [itemName, setItemName] = useState('');
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [deviceIp, setDeviceIp] = useState('192.168.0.100');
 
     // useEffect(() => {
     //     Network.getIpAddressAsync().then(ip => {
@@ -33,7 +32,7 @@ const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
 
         try {
             setSubmitting(true);
-            const response = await fetch(`http://192.168.0.104:8080/api/courses`, {
+            const response = await fetch(`http://10.0.2.2:8080/api/courses`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -48,7 +47,7 @@ const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
             }
 
             Alert.alert('Success', 'Course created successfully!', [
-                { text: 'OK', onPress: () => navigation.navigate('courses') },
+                { text: 'OK', onPress: () => navigation.navigate('my-courses') },
             ]);
         } catch (err: any) {
             Alert.alert('Error', err.message ?? 'Failed to create course. Please try again.');
