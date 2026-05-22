@@ -1,16 +1,24 @@
 package org.example.backend.controller;
 
-import org.example.backend.entity.CourseEntity;
-import org.example.backend.entity.LearningPathEntity;
-import org.example.backend.entity.LearningContentEntity;
-import org.example.backend.service.CourseService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.example.backend.entity.CourseEntity;
+import org.example.backend.entity.LearningContentEntity;
+import org.example.backend.entity.LearningPathEntity;
+import org.example.backend.service.CourseService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -117,6 +125,26 @@ public class CourseController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{courseId}/paths/{pathId}")
+    public ResponseEntity<Map<String, Object>> getLearningPathById(
+            @PathVariable Long courseId,
+            @PathVariable Long pathId) {
+        return courseService.getLearningPathById(pathId)
+                .filter(path -> path.getCourse().getId().equals(courseId))
+                .map(path -> {
+                    Map<String, Object> pathMap = new HashMap<>();
+                    pathMap.put("id", path.getId());
+                    pathMap.put("level", path.getLevel());
+                    pathMap.put("description", path.getDescription());
+                    pathMap.put("points", path.getPoints());
+                    pathMap.put("durationWeeks", path.getDurationWeeks());
+                    pathMap.put("overview", path.getOverview());
+                    return ResponseEntity.ok(pathMap);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    //api for lesson here
     @PostMapping("/{courseId}/paths")
     public ResponseEntity<Map<String, Object>> createLearningPath(
             @PathVariable Long courseId,
@@ -240,7 +268,7 @@ public class CourseController {
         }
     }
 
-    // LearningContent Endpoints
+    // LearningContent Endpoints (Lessons)
     @GetMapping("/{courseId}/paths/{pathId}/contents")
     public ResponseEntity<List<Map<String, Object>>> getContents(
             @PathVariable Long courseId,
@@ -260,6 +288,33 @@ public class CourseController {
         }).collect(Collectors.toList());
         
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{courseId}/paths/{pathId}/contents/{contentId}")
+    public ResponseEntity<Map<String, Object>> getContent(
+            @PathVariable Long courseId,
+            @PathVariable Long pathId,
+            @PathVariable Long contentId) {
+        try {
+            List<LearningContentEntity> contents = courseService.getContentsByLearningPathId(pathId);
+            return contents.stream()
+                    .filter(content -> content.getId().equals(contentId))
+                    .findFirst()
+                    .map(content -> {
+                        Map<String, Object> contentMap = new HashMap<>();
+                        contentMap.put("id", content.getId());
+                        contentMap.put("title", content.getTitle());
+                        contentMap.put("type", content.getType());
+                        contentMap.put("description", content.getDescription());
+                        contentMap.put("contentUrl", content.getContentUrl());
+                        contentMap.put("points", content.getPoints());
+                        contentMap.put("orderIndex", content.getOrderIndex());
+                        return ResponseEntity.ok(contentMap);
+                    })
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/{courseId}/paths/{pathId}/contents")
