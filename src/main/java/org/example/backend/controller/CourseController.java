@@ -348,7 +348,6 @@ public class CourseController {
         }
     }
 
-    // ---------------- SUBMISSION ENDPOINTS (CHUYỂN TỪ SEMINAR SANG COURSE) ----------------
 
     @GetMapping("/{courseId}/submissions")
     public ResponseEntity<List<Map<String, Object>>> getSubmissions(@PathVariable Long courseId) {

@@ -49,7 +49,7 @@ public class StudentSubmissionService {
         return submissionRepository.save(submission);
     }
 
-    // File-Submission (Bild, Video, Dokument)
+    // File-Submission (Image, Video, Document)
     @Transactional
     public StudentSubmissionEntity submitFile(Long courseId, Long studentId, String studentName,
                                               String title, String description, MultipartFile file) throws IOException {
