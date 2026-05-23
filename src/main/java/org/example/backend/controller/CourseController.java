@@ -387,10 +387,15 @@ public class CourseController {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "The file must not be empty!"));
         }
-        return ResponseEntity.ok(java.util.Map.of(
-                "message", "File has been submitted " + file.getOriginalFilename() + " success!",
-                "size", file.getSize() + " bytes"
-        ));
+
+        try {
+            org.example.backend.entity.StudentSubmissionEntity submission =
+                    studentSubmissionService.submitFile(courseId, studentId, studentName, title, description, file);
+
+            return ResponseEntity.ok(submission);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Error when saving file: " + e.getMessage()));
+        }
     }
 
     @PutMapping("/{courseId}/submissions/{submissionId}/grade")
