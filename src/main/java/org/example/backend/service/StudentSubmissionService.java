@@ -95,7 +95,7 @@ public class StudentSubmissionService {
     }
 
     @Transactional
-    public StudentSubmissionEntity gradSubmission(Long submissionId, String feedback, Integer grade) {
+    public StudentSubmissionEntity gradeSubmission(Long submissionId, String feedback, Integer grade) {
         StudentSubmissionEntity submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 

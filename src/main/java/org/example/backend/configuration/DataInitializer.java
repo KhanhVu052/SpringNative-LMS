@@ -1,8 +1,11 @@
 package org.example.backend.configuration;
 
+import org.example.backend.entity.UserEntity;
+import org.example.backend.repository.UserRepository;
 import org.example.backend.service.CourseService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -10,16 +13,29 @@ import org.springframework.stereotype.Component;
 public class DataInitializer implements CommandLineRunner {
 
     private final CourseService courseService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public DataInitializer(CourseService courseService) {
+    public DataInitializer(CourseService courseService, UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.courseService = courseService;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(String... args) {
 
-        if (courseService.getCourseByName("DevOps").isEmpty()) {
+        if (userRepository.findByUsername("admin").isEmpty()) {
+            UserEntity admin = new UserEntity();
+            admin.setUsername("admin");
+            admin.setEmail("admin@coursehub.com");
+            admin.setPasswordHash(passwordEncoder.encode("12345678"));
+            admin.setRole("ROLE_ADMIN");
+            userRepository.save(admin);
+            System.out.println("✅ Tài khoản Admin đã được khởi tạo!");
+        }
 
+        if (courseService.getCourseByName("DevOps").isEmpty()) {
             var devOpsCourse = courseService.createCourse(
                     "DevOps",
                     "Learn DevOps practices and tools for modern software development"
