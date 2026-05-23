@@ -50,7 +50,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     newUser.setProviderId(providerId);
                     newUser.setEmail(email);
                     newUser.setUsername(generateUniqueUsername(username));
-                    newUser.setPasswordHash(null); // OAuth2 Users brauchen kein Passwort
+                    newUser.setPasswordHash(null);
                     return userRepository.save(newUser);
                 });
 

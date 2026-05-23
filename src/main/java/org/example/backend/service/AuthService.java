@@ -28,12 +28,12 @@ public class AuthService {
     public UserResponse register(RegisterRequest request) {
         // validationEmailAlreadyAvailable
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email bereits registriert");
+            throw new IllegalArgumentException("Email already registered");
         }
 
         // validationUsernameAlreadyAvailable
         if (userRepository.existsByUsername(request.username())) {
-            throw new IllegalArgumentException("Benutzername bereits vergeben");
+            throw new IllegalArgumentException("Username already taken");
         }
 
         // createUserEntity
@@ -57,11 +57,11 @@ public class AuthService {
         // searchForUsersEitherByUsernameOrEmail
         UserEntity user = userRepository.findByUsername(request.usernameOrEmail())
                 .or(() -> userRepository.findByEmail(request.usernameOrEmail()))
-                .orElseThrow(() -> new IllegalArgumentException("Ungültige Anmeldedaten"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid login details"));
 
         // checkPassword
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Ungültige Anmeldedaten");
+            throw new IllegalArgumentException("Invalid login details");
         }
 
         // generateJWTToken

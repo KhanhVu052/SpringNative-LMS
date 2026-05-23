@@ -70,9 +70,6 @@ public class SearchController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        // Implementation of pagination (for future expansion)
-        // Here the logic would stand for the paginated search
-
         return search(query, field);
     }
 }
