@@ -44,14 +44,30 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // generateJWTToken
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
 
+        String targetUrl;
+        String userAgent = request.getHeader("User-Agent");
+
         // redirectToFrontendWithToken
-        String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/campus")
-                .queryParam("token", token)
-                .queryParam("username", user.getUsername())
-                .queryParam("email", user.getEmail())
-                .queryParam("id", user.getId())
-                .build().toUriString();
+        if (userAgent != null && (userAgent.contains("Android") || userAgent.contains("iPhone"))) {
+            // Nếu đi từ điện thoại, chuyển hướng về Deep Link của App di động
+            targetUrl = UriComponentsBuilder.fromUriString("coursehub://campus")
+                    .queryParam("token", token)
+                    .queryParam("username", user.getUsername())
+                    .queryParam("email", user.getEmail())
+                    .queryParam("id", user.getId())
+                    .build().toUriString();
+        } else {
+            // Nếu đi từ Máy tính, giữ nguyên trang Web cũ
+            targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/campus")
+                    .queryParam("token", token)
+                    .queryParam("username", user.getUsername())
+                    .queryParam("email", user.getEmail())
+                    .queryParam("id", user.getId())
+                    .build().toUriString();
+        }
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
+
+
 }

@@ -35,14 +35,11 @@ public class AdminController {
         long totalCourses = courseRepository.count();
         long totalEnrollments = enrollmentRepository.count();
 
-        // TODO: Implementiere Certificates wenn Entity existiert
-        long totalCertificates = 0;
 
         AdminStatisticsResponse stats = new AdminStatisticsResponse(
                 totalStudents,
                 totalTeachers,
                 totalEnrollments,
-                totalCertificates,
                 totalCourses
         );
 
