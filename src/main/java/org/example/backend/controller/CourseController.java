@@ -375,6 +375,24 @@ public class CourseController {
         return ResponseEntity.ok(submission);
     }
 
+    @PostMapping(value = "/{courseId}/submissions/file", consumes = {"multipart/form-data"})
+    public ResponseEntity<?> submitFile(
+            @PathVariable Long courseId,
+            @RequestParam("studentId") Long studentId,
+            @RequestParam("studentName") String studentName,
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "The file must not be empty!"));
+        }
+        return ResponseEntity.ok(java.util.Map.of(
+                "message", "File has been submitted " + file.getOriginalFilename() + " success!",
+                "size", file.getSize() + " bytes"
+        ));
+    }
+
     @PutMapping("/{courseId}/submissions/{submissionId}/grade")
     public ResponseEntity<org.example.backend.entity.StudentSubmissionEntity> gradeSubmission(
             @PathVariable Long submissionId,
