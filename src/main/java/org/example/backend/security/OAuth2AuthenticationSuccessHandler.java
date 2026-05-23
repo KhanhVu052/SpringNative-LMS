@@ -42,7 +42,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             .orElseThrow(() -> new RuntimeException("User not found"));
 
         // generateJWTToken
-        String token = jwtUtil.generateToken(user.getUsername());
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
 
         // redirectToFrontendWithToken
         String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/campus")

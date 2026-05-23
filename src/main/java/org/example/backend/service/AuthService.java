@@ -41,9 +41,7 @@ public class AuthService {
         user.setUsername(request.username());
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setProvider("local"); // normalRegistration
-
-        // save
+        user.setRole("ROLE_STUDENT");
         UserEntity savedUser = userRepository.save(user);
 
         // returnResponseWithoutPassword
@@ -67,7 +65,7 @@ public class AuthService {
         }
 
         // generateJWTToken
-        String token = jwtUtil.generateToken(user.getUsername());
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
 
         // returnResponse
         return new LoginResponse(

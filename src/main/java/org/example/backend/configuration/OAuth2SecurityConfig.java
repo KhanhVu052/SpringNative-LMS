@@ -10,6 +10,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.example.backend.security.JwtAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.Arrays;
 
@@ -19,11 +21,14 @@ public class OAuth2SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     public OAuth2SecurityConfig(CustomOAuth2UserService customOAuth2UserService,
-                                OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler) {
+                                OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler,
+                                JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.customOAuth2UserService = customOAuth2UserService;
         this.oAuth2AuthenticationSuccessHandler = oAuth2AuthenticationSuccessHandler;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
@@ -33,8 +38,11 @@ public class OAuth2SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**").permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/teachers/**").hasAnyAuthority("ROLE_TEACHER", "ROLE_ADMIN")
+                        .anyRequest().authenticated()
                 )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)

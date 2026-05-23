@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.example.backend.service.StudentSubmissionService;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -18,9 +19,11 @@ import java.util.stream.Collectors;
 public class CourseController {
 
     private final CourseService courseService;
+    private final StudentSubmissionService studentSubmissionService;
 
-    public CourseController(CourseService courseService) {
+    public CourseController(CourseService courseService, StudentSubmissionService studentSubmissionService) {
         this.courseService = courseService;
+        this.studentSubmissionService = studentSubmissionService;
     }
 
     @GetMapping
@@ -349,15 +352,41 @@ public class CourseController {
     }
 
 
+// --- CÁC ENDPOINT QUẢN LÝ BÀI NỘP VÀ CHẤM ĐIỂM ---
+
     @GetMapping("/{courseId}/submissions")
-    public ResponseEntity<List<Map<String, Object>>> getSubmissions(@PathVariable Long courseId) {
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<List<org.example.backend.entity.StudentSubmissionEntity>> getSubmissions(@PathVariable Long courseId) {
+        // Trả về dữ liệu thực tế từ Database thay vì List.of() rỗng
+        // Lưu ý: Nếu trong StudentSubmissionService chưa có hàm getSubmissionsByCourseId, em có thể gọi qua Repository
+        // Hoặc tạo thêm hàm trong Service để code Clean hơn.
+        return ResponseEntity.ok(studentSubmissionService.getSubmissionsByCourse(courseId));
     }
 
     @PostMapping("/{courseId}/submissions/link")
-    public ResponseEntity<Map<String, Object>> submitLink(@PathVariable Long courseId, @RequestBody Map<String, Object> request) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Link-Submission");
-        return ResponseEntity.ok(response);
+    public ResponseEntity<org.example.backend.entity.StudentSubmissionEntity> submitLink(
+            @PathVariable Long courseId,
+            @RequestBody Map<String, Object> request) {
+
+        org.example.backend.entity.StudentSubmissionEntity submission = studentSubmissionService.submitLink(
+                courseId,
+                Long.valueOf(request.get("studentId").toString()),
+                request.get("studentName").toString(),
+                request.get("title").toString(),
+                request.get("description").toString(),
+                request.get("url").toString()
+        );
+        return ResponseEntity.ok(submission);
+    }
+
+    @PutMapping("/{courseId}/submissions/{submissionId}/grade")
+    public ResponseEntity<org.example.backend.entity.StudentSubmissionEntity> gradeSubmission(
+            @PathVariable Long submissionId,
+            @RequestBody Map<String, Object> body) {
+
+        String feedback = body.get("instructorFeedback").toString();
+        Integer grade = Integer.valueOf(body.get("grade").toString());
+
+        org.example.backend.entity.StudentSubmissionEntity updatedSubmission = studentSubmissionService.gradeSubmission(submissionId, feedback, grade);
+        return ResponseEntity.ok(updatedSubmission);
     }
 }

@@ -2,6 +2,7 @@ package org.example.backend.controller;
 
 import org.example.backend.entity.TeacherEntity;
 import org.example.backend.repository.TeacherRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,14 +44,14 @@ public class TeacherController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> createTeacher(@RequestBody Map<String, String> request) {
+    public ResponseEntity<Map<String, Object>> createTeacher(@RequestBody Map<String, String> data) {
         TeacherEntity teacher = new TeacherEntity();
-        teacher.setFirstName(request.get("firstName"));
-        teacher.setLastName(request.get("lastName"));
-        teacher.setBirthDate(LocalDate.parse(request.get("birthDate")));
-        teacher.setBirthPlace(request.get("birthPlace"));
-        teacher.setQualifications(request.get("qualifications"));
-        teacher.setSubject(request.get("subject"));
+        teacher.setFirstName(data.get("firstName"));
+        teacher.setLastName(data.get("lastName"));
+        teacher.setBirthDate(LocalDate.parse(data.get("birthDate")));
+        teacher.setBirthPlace(data.get("birthPlace"));
+        teacher.setQualifications(data.get("qualifications"));
+        teacher.setSubject(data.get("subject"));
 
         TeacherEntity saved = teacherRepository.save(teacher);
 
@@ -58,12 +59,10 @@ public class TeacherController {
         response.put("id", saved.getId());
         response.put("firstName", saved.getFirstName());
         response.put("lastName", saved.getLastName());
-        response.put("birthDate", saved.getBirthDate().toString());
-        response.put("birthPlace", saved.getBirthPlace());
-        response.put("qualifications", saved.getQualifications());
         response.put("subject", saved.getSubject());
+        response.put("message", "Teacher created successfully");
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PutMapping("/{id}")
@@ -116,4 +115,6 @@ public class TeacherController {
         }
         return ResponseEntity.notFound().build();
     }
+
+
 }
