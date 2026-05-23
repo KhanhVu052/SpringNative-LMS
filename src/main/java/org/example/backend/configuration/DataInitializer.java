@@ -32,7 +32,7 @@ public class DataInitializer implements CommandLineRunner {
             admin.setPasswordHash(passwordEncoder.encode("12345678"));
             admin.setRole("ROLE_ADMIN");
             userRepository.save(admin);
-            System.out.println("✅ Tài khoản Admin đã được khởi tạo!");
+            System.out.println("✅ Admin account has been created!");
         }
 
         if (courseService.getCourseByName("DevOps").isEmpty()) {
