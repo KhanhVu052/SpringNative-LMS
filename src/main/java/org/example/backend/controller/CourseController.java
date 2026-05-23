@@ -220,11 +220,11 @@ public class CourseController {
         try {
             courseService.deleteCourse(id);
             Map<String, String> response = new HashMap<>();
-            response.put("message", "Kurs erfolgreich gelöscht");
+            response.put("message", "Course successfully deleted");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "Fehler beim Löschen des Kurses: " + e.getMessage());
+            error.put("error", "Error deleting the course: " + e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
@@ -356,9 +356,6 @@ public class CourseController {
 
     @GetMapping("/{courseId}/submissions")
     public ResponseEntity<List<org.example.backend.entity.StudentSubmissionEntity>> getSubmissions(@PathVariable Long courseId) {
-        // Trả về dữ liệu thực tế từ Database thay vì List.of() rỗng
-        // Lưu ý: Nếu trong StudentSubmissionService chưa có hàm getSubmissionsByCourseId, em có thể gọi qua Repository
-        // Hoặc tạo thêm hàm trong Service để code Clean hơn.
         return ResponseEntity.ok(studentSubmissionService.getSubmissionsByCourse(courseId));
     }
 

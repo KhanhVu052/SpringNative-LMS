@@ -69,18 +69,18 @@ public class EnrollmentService {
         // checkIfAlreadyEnrolled
         if (enrollmentRepository.existsByUserIdAndCourseIdAndLearningPathId(
                 request.getUserId(), request.getCourseId(), request.getLearningPathId())) {
-            throw new RuntimeException("User ist bereits in diesem Lernpfad eingeschrieben");
+            throw new RuntimeException("User is already enrolled in this learning path");
         }
 
         // ladeEntities
         UserEntity user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User nicht gefunden"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         CourseEntity course = courseRepository.findById(request.getCourseId())
-                .orElseThrow(() -> new RuntimeException("Kurs nicht gefunden"));
+                .orElseThrow(() -> new RuntimeException("Course not found"));
 
         LearningPathEntity learningPath = learningPathRepository.findById(request.getLearningPathId())
-                .orElseThrow(() -> new RuntimeException("Lernpfad nicht gefunden"));
+                .orElseThrow(() -> new RuntimeException("Learning path not found"));
 
         // createEnrollment
         EnrollmentEntity enrollment = new EnrollmentEntity(user, course, learningPath);
@@ -107,7 +107,7 @@ public class EnrollmentService {
 
     public EnrollmentResponse updateProgress(Long enrollmentId, Integer progress) {
         EnrollmentEntity enrollment = enrollmentRepository.findById(enrollmentId)
-                .orElseThrow(() -> new RuntimeException("Enrollment nicht gefunden"));
+                .orElseThrow(() -> new RuntimeException("Enrollment not found"));
 
         enrollment.setProgress(progress);
 
