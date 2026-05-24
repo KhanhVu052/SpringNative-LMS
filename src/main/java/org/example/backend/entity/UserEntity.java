@@ -36,12 +36,17 @@ public class UserEntity {
     @Column(length = 20, nullable = false)
     private String role = "ROLE_STUDENT";
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     public UserEntity() {}
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
     }
+
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -65,4 +70,7 @@ public class UserEntity {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
 }

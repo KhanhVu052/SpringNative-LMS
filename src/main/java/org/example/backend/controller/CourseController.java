@@ -218,10 +218,20 @@ public class CourseController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteCourse(@PathVariable Long id) {
         try {
-            courseService.deleteCourse(id);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Course successfully deleted");
-            return ResponseEntity.ok(response);
+            long studentCount = courseService.getEnrollmentCount(id);
+            if (studentCount > 0) {
+                CourseEntity course = courseService.getCourseById(id).orElseThrow(() -> new RuntimeException("Course not found"));
+                course.setStatus("HIDDEN");
+                courseService.updateCourse(id, course);
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Course has enrolled students. Status changed to HIDDEN (Soft Delete).");
+                return ResponseEntity.ok(response);
+            } else {
+                courseService.deleteCourse(id);
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Course successfully deleted (Hard Delete).");
+                return ResponseEntity.ok(response);
+            }
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", "Error deleting the course: " + e.getMessage());

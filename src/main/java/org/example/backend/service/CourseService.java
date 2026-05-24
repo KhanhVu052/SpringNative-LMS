@@ -135,14 +135,17 @@ public class CourseService {
     public CourseEntity updateCourse(Long id, CourseEntity courseUpdate) {
         CourseEntity course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
-        
+
         if (courseUpdate.getName() != null) {
             course.setName(courseUpdate.getName());
         }
         if (courseUpdate.getDescription() != null) {
             course.setDescription(courseUpdate.getDescription());
         }
-        
+        if (courseUpdate.getStatus() != null) {
+            course.setStatus(courseUpdate.getStatus());
+        }
+
         return courseRepository.save(course);
     }
 

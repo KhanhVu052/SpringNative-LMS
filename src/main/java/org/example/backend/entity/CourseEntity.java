@@ -19,6 +19,9 @@ public class CourseEntity {
     @Column(length = 500)
     private String description;
 
+    @Column(length = 20, nullable = false)
+    private String status = "ACTIVE";
+
     @Column(name = "created_at")
     private Instant createdAt;
 
@@ -39,6 +42,9 @@ public class CourseEntity {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
