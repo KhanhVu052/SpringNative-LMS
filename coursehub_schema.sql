@@ -52,9 +52,10 @@ CREATE TABLE `courses` (
   `created_at` datetime(6) DEFAULT NULL,
   `description` varchar(500) DEFAULT NULL,
   `name` varchar(100) NOT NULL,
+  `status` varchar(20) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `UK5o6x4fpafbywj4v2g0owhh11r` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -125,7 +126,7 @@ CREATE TABLE `learning_paths` (
   PRIMARY KEY (`id`),
   KEY `FKmewg68vno8vl44gro642e5m85` (`course_id`),
   CONSTRAINT `FKmewg68vno8vl44gro642e5m85` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -171,7 +172,10 @@ CREATE TABLE `teachers` (
   `last_name` varchar(100) NOT NULL,
   `qualifications` varchar(1000) DEFAULT NULL,
   `subject` varchar(200) NOT NULL,
-  PRIMARY KEY (`id`)
+  `user_id` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UKcd1k6xwg9jqtiwx9ybnxpmoh9` (`user_id`),
+  CONSTRAINT `FKb8dct7w2j1vl1r2bpstw5isc0` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -186,14 +190,16 @@ CREATE TABLE `users` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `created_at` datetime(6) NOT NULL,
   `email` varchar(255) NOT NULL,
+  `is_active` bit(1) NOT NULL,
   `password_hash` varchar(60) DEFAULT NULL,
   `provider` varchar(20) DEFAULT NULL,
   `provider_id` varchar(255) DEFAULT NULL,
+  `role` varchar(20) NOT NULL,
   `username` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_users_username` (`username`),
   UNIQUE KEY `uk_users_email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -205,4 +211,3 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-05-22 14:09:07
