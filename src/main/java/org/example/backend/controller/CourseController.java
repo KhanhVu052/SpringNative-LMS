@@ -294,6 +294,33 @@ public class CourseController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{courseId}/paths/{pathId}/contents/{contentId}")
+    public ResponseEntity<Map<String, Object>> getContent(
+            @PathVariable Long courseId,
+            @PathVariable Long pathId,
+            @PathVariable Long contentId) {
+        try {
+            List<LearningContentEntity> contents = courseService.getContentsByLearningPathId(pathId);
+            return contents.stream()
+                    .filter(content -> content.getId().equals(contentId))
+                    .findFirst()
+                    .map(content -> {
+                        Map<String, Object> contentMap = new HashMap<>();
+                        contentMap.put("id", content.getId());
+                        contentMap.put("title", content.getTitle());
+                        contentMap.put("type", content.getType());
+                        contentMap.put("description", content.getDescription());
+                        contentMap.put("contentUrl", content.getContentUrl());
+                        contentMap.put("points", content.getPoints());
+                        contentMap.put("orderIndex", content.getOrderIndex());
+                        return ResponseEntity.ok(contentMap);
+                    })
+                    .orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @PostMapping("/{courseId}/paths/{pathId}/contents")
     public ResponseEntity<Map<String, Object>> createContent(
             @PathVariable Long courseId,
@@ -378,6 +405,12 @@ public class CourseController {
             error.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
+    }
+
+    @GetMapping("/teacher/{teacherId}/stats")
+    public ResponseEntity<List<Map<String, Object>>> getTeacherStats(@PathVariable Long teacherId) {
+        List<Map<String, Object>> stats = courseService.getTeacherStats(teacherId);
+        return ResponseEntity.ok(stats);
     }
 
 

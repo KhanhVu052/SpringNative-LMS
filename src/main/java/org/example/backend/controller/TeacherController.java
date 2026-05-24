@@ -51,7 +51,6 @@ public class TeacherController {
 
         return ResponseEntity.ok(response);
     }
-
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> getTeacherById(@PathVariable Long id) {
         return teacherRepository.findById(id)
@@ -68,7 +67,6 @@ public class TeacherController {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
-
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> createTeacher(@RequestBody Map<String, String> data) {
