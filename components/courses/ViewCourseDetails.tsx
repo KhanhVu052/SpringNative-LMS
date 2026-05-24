@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Button } from 'react-native';
 import { useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 type CourseParam = { id: string; title: string; instructor: string; hours: string; lessons: number; image: string };
 type RootStackParamList = { course: { course: CourseParam } };
@@ -78,7 +79,7 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
                     >
                         <Ionicons name="arrow-back" size={24} color="#fff" />
                     </TouchableOpacity>
-                    <Text style={styles.coursImage}>{course?.image ?? '🔵'}</Text>
+                    <FontAwesome name="code" size={24} color="black" style={styles.coursImage} />
                 </View>
 
                 {/* Course Title */}
@@ -153,14 +154,13 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
                             })}
                         >
                             <View style={styles.chapterInfo}>
-                                <Text style={styles.chapterTitle}>{p.level}</Text>
                                 {!!p.overview && (
-                                    <Text style={styles.chapterDetails} numberOfLines={2}>
-                                        {p.overview}
+                                    <Text style={styles.chapterTitle} numberOfLines={2}>
+                                        Chapter {p.level}. <Text style={{ fontWeight: 'normal', color: '#000' }}>{p.overview}</Text>
                                     </Text>
                                 )}
                             </View>
-                            <Text style={styles.chapterArrow}>›</Text>
+                            <FontAwesome name="arrow-right" size={24} color="black" style={styles.chapterArrow} />
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
     },
     chapterTitle: {
         fontSize: 16,
-        fontWeight: '600',
-        color: '#000',
+        fontWeight: 'bold',
+        color: '#1A1A2E',
         marginBottom: 6,
     },
     chapterDetails: {

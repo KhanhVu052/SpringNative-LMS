@@ -19,6 +19,9 @@ import EditDeletePath from './components/path/EditDeletePath';
 import CreatePath from './components/path/CreatePath';
 import CreateLesson from './components/lesson/CreateLesson';
 import LessonDetail from './components/lesson/LessonDetail';
+import Grading from './components/lesson/Grading';
+import SearchCourse from './components/courses/SearchCourse';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,9 +38,27 @@ type Course = {
 
 function HomeScreen({ navigation }: { navigation: any }) {
   const [activeTab, setActiveTab] = useState('home');
-  const [username, setUsername] = useState('Tarek Masud');
+  const [username, setUsername] = useState('');
+  const [homeSearchText, setHomeSearchText] = useState('');
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Fetch username from API
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userId = 1; // default user ID
+        const response = await fetch(`http://10.0.2.2:8080/api/users/${userId}`);
+        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+        const data = await response.json();
+        setUsername(data.username || 'User');
+      } catch (err: any) {
+        console.error('Failed to fetch user:', err.message);
+        setUsername('User');
+      }
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -78,7 +99,19 @@ function HomeScreen({ navigation }: { navigation: any }) {
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <TextInput returnKeyType='search' style={styles.searchInput} placeholder="Search here" />
+          <TextInput
+            returnKeyType='search'
+            style={styles.searchInput}
+            placeholder="Search here"
+            value={homeSearchText}
+            onChangeText={setHomeSearchText}
+            onSubmitEditing={() => {
+              if (homeSearchText.trim()) {
+                navigation.navigate('search-courses', { query: homeSearchText.trim() });
+                setHomeSearchText('');
+              }
+            }}
+          />
         </View>
 
         {/* Featured Courses */}
@@ -125,7 +158,7 @@ function HomeScreen({ navigation }: { navigation: any }) {
                   onPress={() => navigation.navigate('course', { course })}
                 >
                   <View style={styles.courseImagePlaceholder}>
-                    <Text style={{ fontSize: 40 }}>{course.image}</Text>
+                    <FontAwesome name="code" size={24} color="black" />
                   </View>
                   <Text style={styles.recommendedTitle}>{course.title}</Text>
                   <Text style={styles.instructor}>By {course.instructor}</Text>
@@ -155,7 +188,7 @@ function HomeScreen({ navigation }: { navigation: any }) {
                   onPress={() => navigation.navigate('course', { course })}
                 >
                   <View style={styles.courseImagePlaceholder}>
-                    <Text style={{ fontSize: 40 }}>{course.image}</Text>
+                    <FontAwesome name="code" size={24} color="black" />
                   </View>
                   <Text style={styles.premiumTitle}>{course.title}</Text>
                   <Text style={styles.instructor}>By {course.instructor}</Text>
@@ -166,7 +199,6 @@ function HomeScreen({ navigation }: { navigation: any }) {
           )}
         </View>
         <View>
-          <Button title="CreateCourse" onPress={() => navigation.navigate('create-course')} />
           <Button title="MyCourse" onPress={() => navigation.navigate('my-courses')} />
         </View>
       </ScrollView>
@@ -214,6 +246,8 @@ export default function App() {
           <Stack.Screen name="create-path" component={CreatePath} options={{ headerShown: false }} />
           <Stack.Screen name="create-lesson" component={CreateLesson} options={{ headerShown: false }} />
           <Stack.Screen name="lesson-detail" component={LessonDetail} options={{ headerShown: false }} />
+          <Stack.Screen name="grading" component={Grading} options={{ headerShown: false }} />
+          <Stack.Screen name="search-courses" component={SearchCourse} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

@@ -188,6 +188,18 @@ export default function LearningPath({ route, navigation }: LearningPathProps) {
                         </View>
                     )}
 
+                    {/* Edit Button */}
+                    <TouchableOpacity
+                        style={styles.editButton}
+                        onPress={() => navigation.navigate('edit-delete-path', {
+                            courseId,
+                            pathId,
+                            currentPath: path,
+                        })}
+                    >
+                        <Text style={styles.editButtonText}>Edit Path Information</Text>
+                    </TouchableOpacity>
+
                     {/* Lessons Section */}
                     <View style={styles.lessonsSection}>
                         <View style={styles.lessonsHeader}>
@@ -248,17 +260,7 @@ export default function LearningPath({ route, navigation }: LearningPathProps) {
                         })}
                     </View>
 
-                    {/* Edit Button */}
-                    <TouchableOpacity
-                        style={styles.editButton}
-                        onPress={() => navigation.navigate('edit-delete-path', {
-                            courseId,
-                            pathId,
-                            currentPath: path,
-                        })}
-                    >
-                        <Text style={styles.editButtonText}>Edit Path Information</Text>
-                    </TouchableOpacity>
+
                 </ScrollView>
             )}
 
@@ -405,7 +407,7 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',
-        marginTop: 8,
+        marginVertical: 8,
     },
     editButtonText: {
         color: '#fff',

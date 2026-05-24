@@ -119,6 +119,7 @@ const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
 // Khai báo StyleSheet
 const styles = StyleSheet.create({
     safeArea: {
+        marginTop: 32,
         flex: 1,
         backgroundColor: '#FFFFFF',
     },

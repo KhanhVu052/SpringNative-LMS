@@ -417,6 +417,21 @@ export default function LessonDetail({ route, navigation }: { route: any; naviga
                         </TouchableOpacity>
                     )}
 
+                    {/* Grade Students Button */}
+                    <TouchableOpacity
+                        style={styles.gradeButton}
+                        onPress={() => navigation.navigate('grading', {
+                            courseId,
+                            pathId,
+                            contentId,
+                            lessonTitle: lesson.title,
+                        })}
+                        activeOpacity={0.8}
+                    >
+                        <Ionicons name="school-outline" size={20} color="#fff" />
+                        <Text style={styles.gradeButtonText}>Grade Students</Text>
+                    </TouchableOpacity>
+
                     {/* Action Buttons */}
                     <View style={styles.actionButtons}>
                         <TouchableOpacity
@@ -607,6 +622,22 @@ const styles = StyleSheet.create({
     urlText: {
         fontSize: 13,
         color: '#1E88E5',
+    },
+    // ─── Grade Button ───
+    gradeButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#4338CA',
+        paddingVertical: 14,
+        borderRadius: 12,
+        gap: 8,
+        marginBottom: 12,
+    },
+    gradeButtonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '700',
     },
     // ─── Actions ───
     actionButtons: {

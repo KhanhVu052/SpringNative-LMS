@@ -132,43 +132,21 @@ export default function Profile({ navigation }: ProfileProps) {
       <View style={styles.bottomNav}>
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => {
-            setActiveTab('home');
-            navigation.navigate('home');
-          }}
+          onPress={() => { navigation.navigate('home'); }}
         >
-          <Ionicons
-            name="home"
-            size={24}
-            color={activeTab === 'home' ? '#4361EE' : '#999'}
-          />
-          <Text style={[styles.navLabel, activeTab === 'home' && styles.navLabelActive]}>
-            Home
-          </Text>
+          <Ionicons name="home" size={24} color="black" />
+          <Text style={styles.navLabel}>Home</Text>
         </TouchableOpacity>
 
-        {user?.role?.toLowerCase() === 'student' && (
-          <TouchableOpacity
-            style={styles.navItem}
-            onPress={() => setActiveTab('learning')}
-          >
-            <FontAwesome5
-              name="book-reader"
-              size={24}
-              color={activeTab === 'learning' ? '#4361EE' : '#999'}
-            />
-            <Text style={[styles.navLabel, activeTab === 'learning' && styles.navLabelActive]}>
-              Learning
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Profile FAB */}
         <TouchableOpacity
-          style={styles.profileFab}
-          onPress={() => setActiveTab('profile')}
+          style={styles.navItem}
+          onPress={() => {
+            setActiveTab('profile');
+            navigation.navigate('profile');
+          }}
         >
-          <FontAwesome5 name="user-alt" size={22} color="#fff" />
+          <FontAwesome5 name="user-alt" size={24} color="black" />
+          <Text style={styles.navLabel}>Profile</Text>
         </TouchableOpacity>
       </View>
     </View>

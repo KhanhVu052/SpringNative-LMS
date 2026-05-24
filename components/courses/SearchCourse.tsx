@@ -1,10 +1,9 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Ionicons } from '@expo/vector-icons';
 
 const EMOJIS = ['🔵', '🟣', '🟠', '🟢', '🔴', '🟡'];
 
@@ -19,30 +18,31 @@ type Course = {
 
 type RootStackParamList = {
     course: { course: Course };
-    profile: undefined;
-    home: undefined;
-    'create-course': undefined;
 };
 
-export default function ViewCourse() {
+export default function SearchCourse() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-    const [activeTab, setActiveTab] = useState('home');
-    const [username, setUsername] = useState('Tarek Masud');
-    const [searchText, setSearchText] = useState('');
+    const route = useRoute<any>();
+    const initialQuery = route.params?.query ?? '';
+
+    const [searchText, setSearchText] = useState(initialQuery);
     const [courses, setCourses] = useState<Course[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchCourses = async () => {
+    const searchCourses = async (query: string) => {
+        if (!query.trim()) {
+            setCourses([]);
+            return;
+        }
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch(`http://10.0.2.2:8080/api/courses`);
+            const response = await fetch(`http://10.0.2.2:8080/api/search?query=${encodeURIComponent(query.trim())}`);
             if (!response.ok) {
                 throw new Error(`Server error: ${response.status}`);
             }
             const data = await response.json();
-            // Map API response to the shape the UI expects
             const mapped: Course[] = data.map((item: any, index: number) => ({
                 id: String(item.id ?? index),
                 title: item.name || item.title || 'Untitled Course',
@@ -53,63 +53,64 @@ export default function ViewCourse() {
             }));
             setCourses(mapped);
         } catch (err: any) {
-            setError(err.message ?? 'Failed to load courses');
+            setError(err.message ?? 'Failed to search courses');
         } finally {
             setLoading(false);
         }
     };
 
-    useFocusEffect(
-        useCallback(() => {
-            fetchCourses();
-        }, [])
-    );
+    // Search when the component mounts with the initial query
+    useEffect(() => {
+        if (initialQuery) {
+            searchCourses(initialQuery);
+        }
+    }, []);
 
-    const filteredCourses = courses.filter(course =>
-        course.title.toLowerCase().includes(searchText.toLowerCase())
-    );
+    const handleSubmitSearch = () => {
+        searchCourses(searchText);
+    };
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.userName}>Hello, John Doe</Text>
+            {/* Header Row with Back Button and Search Bar */}
+            <View style={styles.headerContainer}>
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                    <FontAwesome5 name="arrow-left" size={20} color="black" />
+                </TouchableOpacity>
+                <View style={styles.searchContainer}>
+                    <FontAwesome5 name="search" size={18} color="#666" style={styles.searchIcon} />
+                    <TextInput
+                        style={styles.searchInput}
+                        returnKeyType='search'
+                        placeholder="Type your search here ..."
+                        value={searchText}
+                        onChangeText={setSearchText}
+                        onSubmitEditing={handleSubmitSearch}
+                        placeholderTextColor="#999"
+                        autoFocus={!initialQuery}
+                    />
+                </View>
             </View>
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <FontAwesome5 name="search" size={24} color="black" />
-                <TextInput
-                    style={styles.searchInput}
-                    returnKeyType='search'
-                    placeholder="Type your search here ..."
-                    value={searchText}
-                    onChangeText={setSearchText}
-                    placeholderTextColor="#999"
-                />
-            </View>
-            <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.navigate('create-course')}
-            >
-                <Text style={styles.editButtonText}>Create New Course</Text>
-            </TouchableOpacity>
+
             {/* Result Text */}
             <Text style={styles.resultText}>
-                {loading ? 'Loading courses...' : `My Courses`}
+                {loading ? 'Searching...' : `Result ${courses.length} course`}
             </Text>
+
             {/* Loading */}
             {loading && (
                 <View style={styles.centeredState}>
                     <ActivityIndicator size="large" color="#6366F1" />
-                    <Text style={styles.stateText}>Fetching courses...</Text>
+                    <Text style={styles.stateText}>Searching courses...</Text>
                 </View>
             )}
 
             {/* Error */}
             {!loading && error && (
                 <View style={styles.centeredState}>
-                    <FontAwesome name="warning" style={styles.errorIcon} size={24} color="yellow" />
+                    <FontAwesome name="warning" size={24} color="black" style={styles.errorIcon} />
                     <Text style={styles.errorText}>{error}</Text>
-                    <TouchableOpacity style={styles.retryButton} onPress={fetchCourses}>
+                    <TouchableOpacity style={styles.retryButton} onPress={handleSubmitSearch}>
                         <Text style={styles.retryText}>Retry</Text>
                     </TouchableOpacity>
                 </View>
@@ -118,7 +119,7 @@ export default function ViewCourse() {
             {/* Course Grid */}
             {!loading && !error && (
                 <FlatList
-                    data={filteredCourses}
+                    data={courses}
                     keyExtractor={(item) => item.id}
                     numColumns={2}
                     columnWrapperStyle={styles.columnWrapper}
@@ -128,7 +129,10 @@ export default function ViewCourse() {
                             onPress={() => navigation.navigate('course', { course })}
                         >
                             <View style={styles.courseImagePlaceholder}>
-                                <FontAwesome5 name="code" size={24} color="black" />
+                                <FontAwesome5 name="play-circle" size={24} color="black" />
+                                <View style={styles.playButton}>
+                                    <FontAwesome5 name="play-circle" size={24} color="black" />
+                                </View>
                             </View>
                             <View style={styles.courseInfo}>
                                 <Text style={styles.courseTitle}>{course.title}</Text>
@@ -141,36 +145,19 @@ export default function ViewCourse() {
                     )}
                     scrollEnabled={true}
                     ListEmptyComponent={
-                        <View style={styles.centeredState}>
-                            <Text style={styles.stateText}>No courses found.</Text>
-                        </View>
+                        !searchText.trim() ? (
+                            <View style={styles.centeredState}>
+                                <FontAwesome5 name="search" size={40} color="#ccc" />
+                                <Text style={styles.stateText}>Enter a keyword to search for courses</Text>
+                            </View>
+                        ) : (
+                            <View style={styles.centeredState}>
+                                <Text style={styles.stateText}>No courses found.</Text>
+                            </View>
+                        )
                     }
                 />
             )}
-            <View style={styles.bottomNav}>
-                <TouchableOpacity
-                    style={styles.navItem}
-                    onPress={() => {
-                        setActiveTab('home');
-                        navigation.navigate('home');
-                    }}
-                >
-                    <Ionicons name="home" size={24} color="black" />
-                    <Text style={styles.navLabel}>Home</Text>
-                </TouchableOpacity>
-
-
-                <TouchableOpacity
-                    style={styles.navItem}
-                    onPress={() => {
-                        setActiveTab('profile');
-                        navigation.navigate('profile');
-                    }}
-                >
-                    <FontAwesome5 name="user-alt" size={24} color="black" />
-                    <Text style={styles.navLabel}>Profile</Text>
-                </TouchableOpacity>
-            </View>
         </View>
     );
 }
@@ -180,26 +167,22 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
         paddingTop: 16,
+        marginTop: 16,
     },
-    header: {
-        paddingHorizontal: 16,
-        paddingTop: 16,
-        paddingBottom: 8,
-    },
-    greeting: {
-        fontSize: 20,
-        color: '#666',
-    },
-    userName: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#000',
-    },
-    searchContainer: {
+    headerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: 16,
+        paddingHorizontal: 16,
         marginBottom: 16,
+    },
+    backButton: {
+        marginRight: 12,
+        padding: 8,
+    },
+    searchContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
         borderWidth: 1,
         borderColor: '#ddd',
         borderRadius: 12,
@@ -207,12 +190,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     searchIcon: {
-        fontSize: 18,
         marginRight: 8,
     },
     searchInput: {
         flex: 1,
-        paddingVertical: 12,
+        paddingVertical: 10,
         fontSize: 14,
         color: '#000',
     },
@@ -222,18 +204,6 @@ const styles = StyleSheet.create({
         color: '#000',
         marginHorizontal: 16,
         marginBottom: 16,
-    },
-    editButton: {
-        backgroundColor: '#2196F3',
-        paddingVertical: 14,
-        borderRadius: 12,
-        alignItems: 'center',
-        margin: 12,
-    },
-    editButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '700',
     },
     columnWrapper: {
         justifyContent: 'space-between',
@@ -254,9 +224,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         position: 'relative',
     },
-    courseImage: {
-        fontSize: 60,
-    },
     playButton: {
         position: 'absolute',
         width: 50,
@@ -265,11 +232,6 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(255, 255, 255, 0.7)',
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    playIcon: {
-        fontSize: 20,
-        color: '#fff',
-        fontWeight: 'bold',
     },
     courseInfo: {
         padding: 12,
@@ -325,31 +287,5 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '600',
         fontSize: 14,
-    },
-    bottomNav: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        backgroundColor: '#fff',
-        borderTopWidth: 1,
-        borderTopColor: '#e0e0e0',
-        paddingVertical: 12,
-        paddingBottom: 16,
-    },
-    navItem: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    navIcon: {
-        fontSize: 28,
-        marginBottom: 4,
-    },
-    navIconActive: {
-        fontSize: 28,
-    },
-    navLabel: {
-        fontSize: 12,
-        color: '#666',
-        marginTop: 4,
     },
 });

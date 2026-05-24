@@ -5,7 +5,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Network from 'expo-network';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 const EMOJIS = ['🔵', '🟣', '🟠', '🟢', '🔴', '🟡'];
-
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 type Course = {
     id: string;
     title: string;
@@ -64,14 +64,22 @@ export default function ViewCourse() {
             setLoading(true);
             setError(null);
             const response = await fetch(`http://10.0.2.2:8080/api/courses`);
+            const contentType = response.headers.get('content-type') || '';
             if (!response.ok) {
+                const errorBody = await response.text();
+                console.error('Server error body:', errorBody);
                 throw new Error(`Server error: ${response.status}`);
+            }
+            if (!contentType.includes('application/json')) {
+                const textBody = await response.text();
+                console.error('Expected JSON but received:', contentType, textBody.substring(0, 500));
+                throw new Error('Server returned non-JSON response. Check that the backend is running and the endpoint is correct.');
             }
             const data = await response.json();
             // Map API response to the shape the UI expects
             const mapped: Course[] = data.map((item: any, index: number) => ({
                 id: String(item.id ?? index),
-                title: item.name || item.title || 'Untitled Course',
+                name: item.name || item.title || 'Untitled Course',
                 instructor: item.instructor || item.instructorName || 'Unknown',
                 hours: String(item.hours ?? item.duration ?? '0'),
                 lessons: Number(item.lessons ?? item.lessonCount ?? 0),
@@ -126,7 +134,7 @@ export default function ViewCourse() {
             {/* Error */}
             {!loading && error && (
                 <View style={styles.centeredState}>
-                    <Text style={styles.errorIcon}>⚠️</Text>
+                    <FontAwesome name="warning" size={24} color="black" style={styles.errorIcon} />
                     <Text style={styles.errorText}>{error}</Text>
                     <TouchableOpacity style={styles.retryButton} onPress={fetchCourses}>
                         <Text style={styles.retryText}>Retry</Text>
@@ -147,9 +155,9 @@ export default function ViewCourse() {
                             onPress={() => navigation.navigate('course', { course })}
                         >
                             <View style={styles.courseImagePlaceholder}>
-                                <Text style={styles.courseImage}>{course.image}</Text>
+                                <FontAwesome5 name="play-circle" size={24} color="black" />
                                 <View style={styles.playButton}>
-                                    <Text style={styles.playIcon}>▶</Text>
+                                    <FontAwesome5 name="play-circle" size={24} color="black" />
                                 </View>
                             </View>
                             <View style={styles.courseInfo}>
