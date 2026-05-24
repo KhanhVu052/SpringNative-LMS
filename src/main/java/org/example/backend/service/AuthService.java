@@ -26,17 +26,13 @@ public class AuthService {
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
-        // validationEmailAlreadyAvailable
         if (userRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("Email already registered");
         }
-
-        // validationUsernameAlreadyAvailable
         if (userRepository.existsByUsername(request.username())) {
             throw new IllegalArgumentException("Username already taken");
         }
 
-        // createUserEntity
         UserEntity user = new UserEntity();
         user.setUsername(request.username());
         user.setEmail(request.email());
@@ -44,35 +40,27 @@ public class AuthService {
         user.setRole("ROLE_STUDENT");
         UserEntity savedUser = userRepository.save(user);
 
-        // returnResponseWithoutPassword
-        return new UserResponse(
-                savedUser.getId(),
-                savedUser.getUsername(),
-                savedUser.getEmail()
-        );
+        return new UserResponse(savedUser.getId(),
+                savedUser.getUsername(), 
+                savedUser.getEmail());
     }
 
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
-        // searchForUsersEitherByUsernameOrEmail
         UserEntity user = userRepository.findByUsername(request.usernameOrEmail())
                 .or(() -> userRepository.findByEmail(request.usernameOrEmail()))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid login details"));
 
-        // checkPassword
+        if (user.getIsActive() != null && !user.getIsActive()) {
+            throw new IllegalArgumentException("Account is locked or disabled due to violation.");
+        }
+
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid login details");
         }
 
-        // generateJWTToken
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
 
-        // returnResponse
-        return new LoginResponse(
-                token,
-                user.getId(),
-                user.getUsername(),
-                user.getEmail()
-        );
+        return new LoginResponse(token, user.getId(), user.getUsername(), user.getEmail());
     }
 }

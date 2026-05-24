@@ -2,6 +2,8 @@ package org.example.backend.controller;
 
 import org.example.backend.entity.UserEntity;
 import org.example.backend.repository.UserRepository;
+import org.example.backend.repository.EnrollmentRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,9 +18,11 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final EnrollmentRepository enrollmentRepository; // Thêm Repository
 
-    public UserController(UserRepository userRepository) {
+    public UserController(UserRepository userRepository, EnrollmentRepository enrollmentRepository) {
         this.userRepository = userRepository;
+        this.enrollmentRepository = enrollmentRepository;
     }
 
     @GetMapping
@@ -32,6 +36,7 @@ public class UserController {
             userMap.put("email", user.getEmail());
             userMap.put("createdAt", user.getCreatedAt().toString());
             userMap.put("provider", user.getProvider());
+            userMap.put("isActive", user.getIsActive());
             return userMap;
         }).collect(Collectors.toList());
 
@@ -48,6 +53,7 @@ public class UserController {
                     userMap.put("email", user.getEmail());
                     userMap.put("createdAt", user.getCreatedAt().toString());
                     userMap.put("provider", user.getProvider());
+                    userMap.put("isActive", user.getIsActive());
                     return ResponseEntity.ok(userMap);
                 })
                 .orElse(ResponseEntity.notFound().build());
@@ -81,11 +87,18 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        if (userRepository.existsById(id)) {
-            userRepository.deleteById(id);
-            return ResponseEntity.ok().build();
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id) {
+        return userRepository.findById(id).map(user -> {
+            long enrollmentCount = enrollmentRepository.countByUserId(id);
+
+            if (enrollmentCount > 0) {
+                user.setIsActive(false);
+                userRepository.save(user);
+                return ResponseEntity.ok(Map.of("message", "User has active enrollments. Account has been locked (Soft Delete)."));
+            } else {
+                userRepository.deleteById(id);
+                return ResponseEntity.ok(Map.of("message", "User deleted permanently (Hard Delete)."));
+            }
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found!")));
     }
 }

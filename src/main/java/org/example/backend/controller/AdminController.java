@@ -30,14 +30,14 @@ public class AdminController {
 
     @GetMapping("/statistics")
     public ResponseEntity<AdminStatisticsResponse> getStatistics() {
-        long totalStudents = userRepository.count();
+        long totalUsers = userRepository.count();
         long totalTeachers = teacherRepository.count();
         long totalCourses = courseRepository.count();
         long totalEnrollments = enrollmentRepository.count();
 
 
         AdminStatisticsResponse stats = new AdminStatisticsResponse(
-                totalStudents,
+                totalUsers,
                 totalTeachers,
                 totalEnrollments,
                 totalCourses
