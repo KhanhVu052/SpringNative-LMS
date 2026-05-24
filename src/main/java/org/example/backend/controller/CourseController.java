@@ -120,6 +120,25 @@ public class CourseController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{courseId}/paths/{pathId}")
+    public ResponseEntity<Map<String, Object>> getLearningPathById(
+            @PathVariable Long courseId,
+            @PathVariable Long pathId) {
+        return courseService.getLearningPathById(pathId)
+                .filter(path -> path.getCourse().getId().equals(courseId))
+                .map(path -> {
+                    Map<String, Object> pathMap = new HashMap<>();
+                    pathMap.put("id", path.getId());
+                    pathMap.put("level", path.getLevel());
+                    pathMap.put("description", path.getDescription());
+                    pathMap.put("points", path.getPoints());
+                    pathMap.put("durationWeeks", path.getDurationWeeks());
+                    pathMap.put("overview", path.getOverview());
+                    return ResponseEntity.ok(pathMap);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping("/{courseId}/paths")
     public ResponseEntity<Map<String, Object>> createLearningPath(
             @PathVariable Long courseId,
