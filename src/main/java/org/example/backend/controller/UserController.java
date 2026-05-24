@@ -60,18 +60,32 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateUser(
+    public ResponseEntity<?> updateUser(
             @PathVariable Long id,
             @RequestBody Map<String, String> updates
     ) {
         return userRepository.findById(id)
                 .map(user -> {
+
                     if (updates.containsKey("username")) {
-                        user.setUsername(updates.get("username"));
+                        String newUsername = updates.get("username");
+
+                        if (!newUsername.equals(user.getUsername()) && userRepository.existsByUsername(newUsername)) {
+                            return ResponseEntity.badRequest().body(Map.of("error", "Username already taken"));
+                        }
+                        user.setUsername(newUsername);
                     }
+
+
                     if (updates.containsKey("email")) {
-                        user.setEmail(updates.get("email"));
+                        String newEmail = updates.get("email");
+
+                        if (!newEmail.equals(user.getEmail()) && userRepository.existsByEmail(newEmail)) {
+                            return ResponseEntity.badRequest().body(Map.of("error", "Email already registered"));
+                        }
+                        user.setEmail(newEmail);
                     }
+
 
                     UserEntity updated = userRepository.save(user);
 

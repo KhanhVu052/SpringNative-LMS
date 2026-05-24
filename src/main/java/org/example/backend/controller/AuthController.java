@@ -32,4 +32,9 @@ public class AuthController {
         LoginResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(IllegalArgumentException.class)
+    public org.springframework.http.ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return org.springframework.http.ResponseEntity.badRequest().body(ex.getMessage());
+    }
 }
