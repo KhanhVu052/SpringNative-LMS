@@ -45,13 +45,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // searchOrCreateUsers
         UserEntity user = userRepository.findByProviderAndProviderId(provider, providerId)
                 .orElseGet(() -> {
-                    UserEntity newUser = new UserEntity();
-                    newUser.setProvider(provider);
-                    newUser.setProviderId(providerId);
-                    newUser.setEmail(email);
-                    newUser.setUsername(generateUniqueUsername(username));
-                    newUser.setPasswordHash(null);
-                    return userRepository.save(newUser);
+                    // Check if an account with this email already exists
+                    return userRepository.findByEmail(email).map(existingUser -> {
+                        // Link the existing account to this OAuth provider
+                        existingUser.setProvider(provider);
+                        existingUser.setProviderId(providerId);
+                        return userRepository.save(existingUser);
+                    }).orElseGet(() -> {
+                        // Create a brand new account
+                        UserEntity newUser = new UserEntity();
+                        newUser.setProvider(provider);
+                        newUser.setProviderId(providerId);
+                        newUser.setEmail(email);
+                        newUser.setUsername(generateUniqueUsername(username));
+                        newUser.setPasswordHash(null);
+                        return userRepository.save(newUser);
+                    });
                 });
 
         return oAuth2User;
