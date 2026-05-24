@@ -10,6 +10,7 @@ import {
     Platform,
     Alert,
 } from 'react-native';
+import { useUser } from '../../context/UserContext';
 
 const BASE_URL = 'http://10.0.2.2:8080';
 
@@ -17,6 +18,7 @@ const CONTENT_TYPES = ['VIDEO', 'DOCUMENT', 'QUIZ', 'ARTICLE', 'EXERCISE'];
 
 const EditDeleteLesson = ({ route, navigation }: { route: any; navigation: any }) => {
     const { courseId, pathId, contentId, currentContent } = route.params || {};
+    const { token } = useUser();
 
     const [title, setTitle] = useState('');
     const [type, setType] = useState('VIDEO');
@@ -40,14 +42,17 @@ const EditDeleteLesson = ({ route, navigation }: { route: any; navigation: any }
     const isSaveDisabled = title.trim() === '' || submitting;
 
     const handleUpdate = async () => {
-        if (isSaveDisabled) return;
+        if (isSaveDisabled || !token) return;
         try {
             setSubmitting(true);
             const response = await fetch(
                 `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents/${contentId}`,
                 {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         title: title.trim(),
                         type: type,
@@ -86,7 +91,12 @@ const EditDeleteLesson = ({ route, navigation }: { route: any; navigation: any }
                             setSubmitting(true);
                             const response = await fetch(
                                 `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents/${contentId}`,
-                                { method: 'DELETE' }
+                                { 
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                }
                             );
                             if (!response.ok) {
                                 const errText = await response.text();

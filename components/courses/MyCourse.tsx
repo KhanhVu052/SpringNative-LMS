@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Ionicons } from '@expo/vector-icons';
+import { useUser } from '../../context/UserContext';
 
 const EMOJIS = ['🔵', '🟣', '🟠', '🟢', '🔴', '🟡'];
 
@@ -32,12 +33,39 @@ export default function ViewCourse() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { userId, token } = useUser();
+
+    // Fetch user details dynamically
+    useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const response = await fetch(`http://10.0.2.2:8080/api/users/${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
+                const data = await response.json();
+                setUsername(data.username || 'User');
+            } catch (err: any) {
+                console.error('Failed to fetch user:', err.message);
+                setUsername('User');
+            }
+        };
+        if (userId && token) {
+            fetchUser();
+        }
+    }, [userId, token]);
 
     const fetchCourses = async () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch(`http://10.0.2.2:8080/api/courses`);
+            const response = await fetch(`http://10.0.2.2:8080/api/courses`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             if (!response.ok) {
                 throw new Error(`Server error: ${response.status}`);
             }
@@ -72,7 +100,7 @@ export default function ViewCourse() {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.userName}>Hello, John Doe</Text>
+                <Text style={styles.userName}>Hello, {username}</Text>
             </View>
             {/* Search Bar */}
             <View style={styles.searchContainer}>

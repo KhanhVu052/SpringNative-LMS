@@ -10,11 +10,13 @@ import {
     Platform,
     Alert,
 } from 'react-native';
+import { useUser } from '../../context/UserContext';
 
 const BASE_URL = 'http://10.0.2.2:8080';
 
 const EditDeletePath = ({ route, navigation }: { route: any; navigation: any }) => {
     const { courseId, pathId, currentPath } = route.params || {};
+    const { token } = useUser();
 
     const [level, setLevel] = useState('');
     const [description, setDescription] = useState('');
@@ -36,14 +38,17 @@ const EditDeletePath = ({ route, navigation }: { route: any; navigation: any }) 
     const isSaveDisabled = level.trim() === '' || submitting;
 
     const handleUpdate = async () => {
-        if (isSaveDisabled) return;
+        if (isSaveDisabled || !token) return;
         try {
             setSubmitting(true);
             const response = await fetch(
                 `${BASE_URL}/api/courses/${courseId}/paths/${pathId}`,
                 {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         level: level.trim(),
                         description: description.trim(),
@@ -81,7 +86,12 @@ const EditDeletePath = ({ route, navigation }: { route: any; navigation: any }) 
                             setSubmitting(true);
                             const response = await fetch(
                                 `${BASE_URL}/api/courses/${courseId}/paths/${pathId}`,
-                                { method: 'DELETE' }
+                                { 
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                }
                             );
                             if (!response.ok) {
                                 const errText = await response.text();

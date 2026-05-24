@@ -12,11 +12,13 @@ import {
     Alert,
     ActivityIndicator,
 } from 'react-native';
+import { useUser } from '../../context/UserContext';
 
 const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
     const [itemName, setItemName] = useState('');
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const { token } = useUser();
 
     // useEffect(() => {
     //     Network.getIpAddressAsync().then(ip => {
@@ -28,13 +30,16 @@ const AddNewItemScreen = ({ navigation }: { navigation: any }) => {
     const isSaveDisabled = itemName.trim() === '' || submitting;
 
     const handleSave = async () => {
-        if (isSaveDisabled) return;
+        if (isSaveDisabled || !token) return;
 
         try {
             setSubmitting(true);
             const response = await fetch(`http://10.0.2.2:8080/api/courses`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     name: itemName.trim(),
                     description: description.trim(),

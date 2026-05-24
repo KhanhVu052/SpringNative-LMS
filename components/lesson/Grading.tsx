@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useUser } from '../../context/UserContext';
 
 const BASE_URL = 'http://10.0.2.2:8080';
 
@@ -30,6 +31,7 @@ type StudentSubmission = {
 
 export default function Grading({ route, navigation }: { route: any; navigation: any }) {
     const { courseId, pathId, contentId, lessonTitle } = route.params || {};
+    const { token } = useUser();
 
     const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
     const [loading, setLoading] = useState(true);
@@ -42,11 +44,17 @@ export default function Grading({ route, navigation }: { route: any; navigation:
     const [submitting, setSubmitting] = useState(false);
 
     const fetchSubmissions = async () => {
+        if (!token) return;
         try {
             setLoading(true);
             setError(null);
             const res = await fetch(
-                `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents/${contentId}/submissions`
+                `${BASE_URL}/api/courses/${courseId}/submissions`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
             );
             if (!res.ok) throw new Error(`Server error: ${res.status}`);
             const data = await res.json();
@@ -69,10 +77,10 @@ export default function Grading({ route, navigation }: { route: any; navigation:
 
     useFocusEffect(
         useCallback(() => {
-            if (courseId && pathId && contentId) {
+            if (courseId && pathId && contentId && token) {
                 fetchSubmissions();
             }
-        }, [courseId, pathId, contentId])
+        }, [courseId, pathId, contentId, token])
     );
 
     const selectStudent = (student: StudentSubmission) => {
@@ -98,13 +106,17 @@ export default function Grading({ route, navigation }: { route: any; navigation:
             Alert.alert('Validation', 'Mark must be between 0 and 100.');
             return;
         }
+        if (!token) return;
         try {
             setSubmitting(true);
             const res = await fetch(
-                `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents/${contentId}/submissions/${selectedStudent.id}/grade`,
+                `${BASE_URL}/api/courses/${courseId}/submissions/${selectedStudent.id}/grade`,
                 {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         mark: numMark,
                         comment: comment.trim(),

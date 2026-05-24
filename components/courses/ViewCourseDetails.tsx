@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useUser } from '../../context/UserContext';
 
 type CourseParam = { id: string; title: string; instructor: string; hours: string; lessons: number; image: string };
 type RootStackParamList = { course: { course: CourseParam } };
@@ -12,6 +13,7 @@ const BASE_URL = 'http://10.0.2.2:8080';
 export default function ViewCourseDetails({ navigation }: { navigation: any }) {
     const route = useRoute<RouteProp<RootStackParamList, 'course'>>();
     const course = route.params?.course;
+    const { token } = useUser();
 
     const [description, setDescription] = useState<string | null>(null);
     const [descLoading, setDescLoading] = useState(false);
@@ -21,13 +23,17 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
     const [pathsLoading, setPathsLoading] = useState(false);
 
     useEffect(() => {
-        if (!course?.id) return;
+        if (!course?.id || !token) return;
 
         const fetchDetails = async () => {
             try {
                 setDescLoading(true);
                 setDescError(null);
-                const res = await fetch(`${BASE_URL}/api/courses/${course.id}`);
+                const res = await fetch(`${BASE_URL}/api/courses/${course.id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
                 if (!res.ok) throw new Error(`Server error: ${res.status}`);
                 const data = await res.json();
                 setDescription(data.description ?? '');
@@ -39,13 +45,17 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
         };
 
         fetchDetails();
-    }, [course?.id]);
+    }, [course?.id, token]);
 
     const fetchPaths = useCallback(async () => {
-        if (!course?.id) return;
+        if (!course?.id || !token) return;
         try {
             setPathsLoading(true);
-            const res = await fetch(`${BASE_URL}/api/courses/${course.id}/paths`);
+            const res = await fetch(`${BASE_URL}/api/courses/${course.id}/paths`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             if (!res.ok) throw new Error(`Server error: ${res.status}`);
             const data = await res.json();
             const mapped = (Array.isArray(data) ? data : []).map((item: any) => ({
@@ -59,7 +69,7 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
         } finally {
             setPathsLoading(false);
         }
-    }, [course?.id]);
+    }, [course?.id, token]);
 
     useFocusEffect(
         useCallback(() => {
@@ -79,15 +89,21 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
                     >
                         <Ionicons name="arrow-back" size={24} color="#fff" />
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        style={styles.homeButton}
+                        onPress={() => navigation.navigate('my-courses')}
+                    >
+                        <Ionicons name="home" size={22} color="#fff" />
+                    </TouchableOpacity>
                     <FontAwesome name="code" size={24} color="black" style={styles.coursImage} />
                 </View>
 
                 {/* Course Title */}
                 <View style={styles.titleSection}>
                     <Text style={styles.courseTitle}>{course?.title ?? 'Course Details'}</Text>
-                    <View style={styles.editButton}>
+                    <View style={styles.buttonContainer}>
                         <TouchableOpacity
-                            style={styles.editButtonContent}
+                            style={styles.actionButton}
                             onPress={() => navigation.navigate('edit-delete-course', {
                                 currentItem: {
                                     id: course?.id,
@@ -96,17 +112,17 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
                                 }
                             })}
                         >
-                            <Text style={styles.editButtonText}>Edit Information</Text>
+                            <Text style={styles.actionButtonText}>Edit Information</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={styles.editButtonContent}
+                            style={[styles.actionButton, styles.createPathButton]}
                             onPress={() => navigation.navigate('create-path', {
                                 course: {
                                     id: course?.id,
                                 }
                             })}
                         >
-                            <Text style={styles.editButtonText}>Create Path</Text>
+                            <Text style={styles.actionButtonText}>Create Path</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -156,7 +172,7 @@ export default function ViewCourseDetails({ navigation }: { navigation: any }) {
                             <View style={styles.chapterInfo}>
                                 {!!p.overview && (
                                     <Text style={styles.chapterTitle} numberOfLines={2}>
-                                        Chapter {p.level}. <Text style={{ fontWeight: 'normal', color: '#000' }}>{p.overview}</Text>
+                                        {p.level}. <Text style={{ fontWeight: 'normal', color: '#000' }}>{p.overview}</Text>
                                     </Text>
                                 )}
                             </View>
@@ -194,6 +210,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    homeButton: {
+        position: 'absolute',
+        top: 40,
+        right: 16,
+        zIndex: 10,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     coursImage: {
         fontSize: 100,
     },
@@ -209,19 +237,25 @@ const styles = StyleSheet.create({
         color: '#000',
         marginBottom: 12,
     },
-    editButton: {
-        backgroundColor: '#6366F1',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        marginHorizontal: 12,
+    buttonContainer: {
         flexDirection: 'row',
-        borderRadius: 8,
+        justifyContent: 'space-between',
+        width: '100%',
+        gap: 12,
+        marginTop: 4,
     },
-    editButtonContent: {
+    actionButton: {
         flex: 1,
+        backgroundColor: '#6366F1',
+        paddingVertical: 12,
+        borderRadius: 8,
         alignItems: 'center',
+        justifyContent: 'center',
     },
-    editButtonText: {
+    createPathButton: {
+        backgroundColor: '#10B981',
+    },
+    actionButtonText: {
         color: '#FFFFFF',
         fontSize: 14,
         fontWeight: '600',

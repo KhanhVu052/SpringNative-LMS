@@ -10,10 +10,12 @@ import {
     Platform,
     Alert
 } from 'react-native';
+import { useUser } from '../../context/UserContext';
 
 const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) => {
     // Get the item data passed from the previous screen
     const { currentItem } = route.params || {};
+    const { token } = useUser();
 
     // Initialize state with existing data
     const [itemName, setItemName] = useState('');
@@ -33,14 +35,17 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
 
     // Handler for Update action
     const handleUpdate = async () => {
-        if (isSaveDisabled) return;
+        if (isSaveDisabled || !token) return;
         try {
             setSubmitting(true);
             const response = await fetch(
                 `http://10.0.2.2:8080/api/courses/${currentItem.id}`,
                 {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         name: itemName.trim(),
                         description: description.trim(),
@@ -76,7 +81,12 @@ const EditItemScreen = ({ route, navigation }: { route: any, navigation: any }) 
                             setSubmitting(true);
                             const response = await fetch(
                                 `http://10.0.2.2:8080/api/courses/${currentItem.id}`,
-                                { method: 'DELETE' }
+                                { 
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                }
                             );
                             if (!response.ok) {
                                 const errText = await response.text();

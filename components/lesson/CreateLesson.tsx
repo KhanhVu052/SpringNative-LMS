@@ -10,6 +10,7 @@ import {
     Platform,
     Alert,
 } from 'react-native';
+import { useUser } from '../../context/UserContext';
 
 const BASE_URL = 'http://10.0.2.2:8080';
 
@@ -17,6 +18,7 @@ const CONTENT_TYPES = ['VIDEO', 'DOCUMENT', 'QUIZ', 'ARTICLE', 'EXERCISE'];
 
 const CreateLesson = ({ route, navigation }: { route: any; navigation: any }) => {
     const { courseId, pathId } = route.params || {};
+    const { token } = useUser();
 
     const [title, setTitle] = useState('');
     const [type, setType] = useState('VIDEO');
@@ -29,14 +31,17 @@ const CreateLesson = ({ route, navigation }: { route: any; navigation: any }) =>
     const isSaveDisabled = title.trim() === '' || submitting;
 
     const handleCreate = async () => {
-        if (isSaveDisabled) return;
+        if (isSaveDisabled || !token) return;
         try {
             setSubmitting(true);
             const response = await fetch(
                 `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents`,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         title: title.trim(),
                         type: type,

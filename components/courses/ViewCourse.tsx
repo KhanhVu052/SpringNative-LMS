@@ -4,6 +4,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Network from 'expo-network';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import { useUser } from '../../context/UserContext';
 const EMOJIS = ['🔵', '🟣', '🟠', '🟢', '🔴', '🟡'];
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 type Course = {
@@ -21,6 +22,7 @@ type RootStackParamList = {
 
 export default function ViewCourse() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const { token } = useUser();
     const [searchText, setSearchText] = useState('');
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
@@ -60,10 +62,15 @@ export default function ViewCourse() {
     //     }
     // }, [deviceIp]);
     const fetchCourses = async () => {
+        if (!token) return;
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch(`http://10.0.2.2:8080/api/courses`);
+            const response = await fetch(`http://10.0.2.2:8080/api/courses`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const contentType = response.headers.get('content-type') || '';
             if (!response.ok) {
                 const errorBody = await response.text();
@@ -79,7 +86,7 @@ export default function ViewCourse() {
             // Map API response to the shape the UI expects
             const mapped: Course[] = data.map((item: any, index: number) => ({
                 id: String(item.id ?? index),
-                name: item.name || item.title || 'Untitled Course',
+                title: item.name || item.title || 'Untitled Course',
                 instructor: item.instructor || item.instructorName || 'Unknown',
                 hours: String(item.hours ?? item.duration ?? '0'),
                 lessons: Number(item.lessons ?? item.lessonCount ?? 0),
@@ -96,7 +103,7 @@ export default function ViewCourse() {
     useFocusEffect(
         useCallback(() => {
             fetchCourses();
-        }, [])
+        }, [token])
     );
 
     const filteredCourses = courses.filter(course =>

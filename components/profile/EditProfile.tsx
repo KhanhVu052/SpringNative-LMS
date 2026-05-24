@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useUser } from '../../context/UserContext';
 
 interface EditProfileProps {
   navigation: any;
@@ -134,6 +135,9 @@ const TEACHER_ID = 1;
 
 /* ── Main screen ── */
 export default function EditProfile({ navigation }: EditProfileProps) {
+  const { token, userId } = useUser();
+  const currentUserId = userId || TEACHER_ID;
+
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -146,10 +150,15 @@ export default function EditProfile({ navigation }: EditProfileProps) {
 
   useEffect(() => {
     const fetchTeacher = async () => {
+      if (!token) return;
       try {
         setLoading(true);
         setFetchError(null);
-        const res = await fetch(`${BASE_URL}/api/teachers/${TEACHER_ID}`);
+        const res = await fetch(`${BASE_URL}/api/teachers/${currentUserId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         const contentType = res.headers.get('content-type') || '';
         if (!contentType.includes('application/json')) {
@@ -171,7 +180,7 @@ export default function EditProfile({ navigation }: EditProfileProps) {
       }
     };
     fetchTeacher();
-  }, []);
+  }, [currentUserId, token]);
 
   const validateDate = (dateStr: string): boolean => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
@@ -198,6 +207,7 @@ export default function EditProfile({ navigation }: EditProfileProps) {
       return;
     }
 
+    if (!token) return;
     try {
       setSaving(true);
       const body = {
@@ -208,9 +218,12 @@ export default function EditProfile({ navigation }: EditProfileProps) {
         subject: subject.trim(),
         qualifications: qualifications.trim() || null,
       };
-      const res = await fetch(`${BASE_URL}/api/teachers/${TEACHER_ID}`, {
+      const res = await fetch(`${BASE_URL}/api/teachers/${currentUserId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(body),
       });
       if (!res.ok) {

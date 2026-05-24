@@ -4,6 +4,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { useUser } from '../../context/UserContext';
 
 const EMOJIS = ['🔵', '🟣', '🟠', '🟢', '🔴', '🟡'];
 
@@ -23,6 +24,7 @@ type RootStackParamList = {
 export default function SearchCourse() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const route = useRoute<any>();
+    const { token } = useUser();
     const initialQuery = route.params?.query ?? '';
 
     const [searchText, setSearchText] = useState(initialQuery);
@@ -31,14 +33,18 @@ export default function SearchCourse() {
     const [error, setError] = useState<string | null>(null);
 
     const searchCourses = async (query: string) => {
-        if (!query.trim()) {
+        if (!query.trim() || !token) {
             setCourses([]);
             return;
         }
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch(`http://10.0.2.2:8080/api/search?query=${encodeURIComponent(query.trim())}`);
+            const response = await fetch(`http://10.0.2.2:8080/api/search?query=${encodeURIComponent(query.trim())}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             if (!response.ok) {
                 throw new Error(`Server error: ${response.status}`);
             }
@@ -61,10 +67,10 @@ export default function SearchCourse() {
 
     // Search when the component mounts with the initial query
     useEffect(() => {
-        if (initialQuery) {
+        if (initialQuery && token) {
             searchCourses(initialQuery);
         }
-    }, []);
+    }, [initialQuery, token]);
 
     const handleSubmitSearch = () => {
         searchCourses(searchText);

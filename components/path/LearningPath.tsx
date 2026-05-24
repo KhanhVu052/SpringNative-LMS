@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useUser } from '../../context/UserContext';
 
 const BASE_URL = 'http://10.0.2.2:8080';
 
@@ -46,6 +47,7 @@ interface LearningPathProps {
 
 export default function LearningPath({ route, navigation }: LearningPathProps) {
     const { courseId, pathId, courseName } = route.params || {};
+    const { token } = useUser();
 
     const [path, setPath] = useState<PathDetails | null>(null);
     const [loading, setLoading] = useState(true);
@@ -55,10 +57,15 @@ export default function LearningPath({ route, navigation }: LearningPathProps) {
     const [lessonsLoading, setLessonsLoading] = useState(false);
 
     const fetchPathDetails = async () => {
+        if (!token) return;
         try {
             setLoading(true);
             setError(null);
-            const res = await fetch(`${BASE_URL}/api/courses/${courseId}/paths/${pathId}`);
+            const res = await fetch(`${BASE_URL}/api/courses/${courseId}/paths/${pathId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             if (!res.ok) throw new Error(`Server error: ${res.status}`);
             const data = await res.json();
             setPath({
@@ -77,9 +84,14 @@ export default function LearningPath({ route, navigation }: LearningPathProps) {
     };
 
     const fetchLessons = async () => {
+        if (!token) return;
         try {
             setLessonsLoading(true);
-            const res = await fetch(`${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents`);
+            const res = await fetch(`${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             if (!res.ok) throw new Error(`Server error: ${res.status}`);
             const data = await res.json();
             const mapped: LearningContent[] = (Array.isArray(data) ? data : []).map((item: any) => ({
@@ -105,11 +117,11 @@ export default function LearningPath({ route, navigation }: LearningPathProps) {
 
     useFocusEffect(
         useCallback(() => {
-            if (courseId && pathId) {
+            if (courseId && pathId && token) {
                 fetchPathDetails();
                 fetchLessons();
             }
-        }, [courseId, pathId])
+        }, [courseId, pathId, token])
     );
 
     return (
@@ -124,7 +136,9 @@ export default function LearningPath({ route, navigation }: LearningPathProps) {
                 <Text style={styles.headerTitle} numberOfLines={1}>
                     {courseName || 'Learning Path'}
                 </Text>
-                <View style={{ width: 24 }} />
+                <TouchableOpacity onPress={() => navigation.navigate('my-courses')} style={styles.backButton}>
+                    <Ionicons name="home" size={24} color="#333" />
+                </TouchableOpacity>
             </View>
 
             {/* Loading */}

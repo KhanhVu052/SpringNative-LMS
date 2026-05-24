@@ -10,11 +10,13 @@ import {
     Platform,
     Alert,
 } from 'react-native';
+import { useUser } from '../../context/UserContext';
 
 const BASE_URL = 'http://10.0.2.2:8080';
 
 const CreatePath = ({ route, navigation }: { route: any; navigation: any }) => {
     const courseId = route.params?.courseId ?? route.params?.course?.id;
+    const { token } = useUser();
 
     const [level, setLevel] = useState('');
     const [overview, setOverview] = useState('');
@@ -25,14 +27,17 @@ const CreatePath = ({ route, navigation }: { route: any; navigation: any }) => {
     const isSaveDisabled = level.trim() === '' || submitting;
 
     const handleCreate = async () => {
-        if (isSaveDisabled) return;
+        if (isSaveDisabled || !token) return;
         try {
             setSubmitting(true);
             const response = await fetch(
                 `${BASE_URL}/api/courses/${courseId}/paths`,
                 {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         level: level.trim(),
                         overview: overview.trim(),

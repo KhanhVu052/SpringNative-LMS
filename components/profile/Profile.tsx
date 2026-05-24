@@ -12,6 +12,7 @@ import {
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { useUser } from '../../context/UserContext';
 
 const { width } = Dimensions.get('window');
 
@@ -20,11 +21,10 @@ interface ProfileProps {
 }
 
 const BASE_URL = 'http://10.0.2.2:8080';
-// TODO: replace with the actual logged-in user's ID (e.g. from auth context)
-const USER_ID = 1;
 
 export default function Profile({ navigation }: ProfileProps) {
   const [activeTab, setActiveTab] = useState('profile');
+  const { userId, token } = useUser();
 
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [userLoading, setUserLoading] = useState(true);
@@ -32,10 +32,15 @@ export default function Profile({ navigation }: ProfileProps) {
 
   useEffect(() => {
     const fetchUser = async () => {
+      if (!token) return;
       try {
         setUserLoading(true);
         setUserError(null);
-        const res = await fetch(`${BASE_URL}/api/users/${USER_ID}`);
+        const res = await fetch(`${BASE_URL}/api/users/${userId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         const data = await res.json();
         setUser({
@@ -50,7 +55,7 @@ export default function Profile({ navigation }: ProfileProps) {
       }
     };
     fetchUser();
-  }, []);
+  }, [userId, token]);
 
   const badges = [
     { id: '1', emoji: '🥈', label: '1st' },

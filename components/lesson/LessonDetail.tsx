@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { useUser } from '../../context/UserContext';
 
 const BASE_URL = 'http://10.0.2.2:8080';
 
@@ -41,6 +42,7 @@ const CONTENT_TYPES = ['VIDEO', 'DOCUMENT', 'QUIZ', 'ARTICLE', 'EXERCISE'];
 
 export default function LessonDetail({ route, navigation }: { route: any; navigation: any }) {
     const { courseId, pathId, contentId } = route.params || {};
+    const { token } = useUser();
 
     const [lesson, setLesson] = useState<LessonData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -58,11 +60,17 @@ export default function LessonDetail({ route, navigation }: { route: any; naviga
     const [saving, setSaving] = useState(false);
 
     const fetchLesson = async () => {
+        if (!token) return;
         try {
             setLoading(true);
             setError(null);
             const res = await fetch(
-                `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents/${contentId}`
+                `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents/${contentId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
             );
             if (!res.ok) throw new Error(`Server error: ${res.status}`);
             const data = await res.json();
@@ -85,11 +93,11 @@ export default function LessonDetail({ route, navigation }: { route: any; naviga
 
     useFocusEffect(
         useCallback(() => {
-            if (courseId && pathId && contentId) {
+            if (courseId && pathId && contentId && token) {
                 fetchLesson();
                 setEditing(false);
             }
-        }, [courseId, pathId, contentId])
+        }, [courseId, pathId, contentId, token])
     );
 
     const getTypeConfig = (type: string) => {
@@ -116,13 +124,17 @@ export default function LessonDetail({ route, navigation }: { route: any; naviga
             Alert.alert('Validation', 'Title is required.');
             return;
         }
+        if (!token) return;
         try {
             setSaving(true);
             const res = await fetch(
                 `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents/${contentId}`,
                 {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         title: editTitle.trim(),
                         type: editType,
@@ -161,7 +173,12 @@ export default function LessonDetail({ route, navigation }: { route: any; naviga
                             setDeleting(true);
                             const res = await fetch(
                                 `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents/${contentId}`,
-                                { method: 'DELETE' }
+                                { 
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`
+                                    }
+                                }
                             );
                             if (!res.ok) {
                                 const errText = await res.text();
@@ -334,7 +351,9 @@ export default function LessonDetail({ route, navigation }: { route: any; naviga
                 <Text style={styles.headerTitle} numberOfLines={1}>
                     Lesson Detail
                 </Text>
-                <View style={{ width: 24 }} />
+                <TouchableOpacity onPress={() => navigation.navigate('my-courses')} style={styles.backButton}>
+                    <Ionicons name="home" size={24} color="#333" />
+                </TouchableOpacity>
             </View>
 
             {/* Loading */}
