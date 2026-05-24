@@ -27,4 +27,5 @@ public interface EnrollmentRepository extends JpaRepository<EnrollmentEntity, Lo
     long countByUserId(Long userId);
 
     long countByCourseId(Long courseId);
+
 }

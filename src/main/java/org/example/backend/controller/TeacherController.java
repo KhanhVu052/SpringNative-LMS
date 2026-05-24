@@ -52,6 +52,25 @@ public class TeacherController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getTeacherById(@PathVariable Long id) {
+        return teacherRepository.findById(id)
+                .map(teacher -> {
+                    Map<String, Object> teacherMap = new HashMap<>();
+                    teacherMap.put("id", teacher.getId());
+                    teacherMap.put("firstName", teacher.getFirstName());
+                    teacherMap.put("lastName", teacher.getLastName());
+                    teacherMap.put("birthDate", teacher.getBirthDate().toString());
+                    teacherMap.put("birthPlace", teacher.getBirthPlace());
+                    teacherMap.put("qualifications", teacher.getQualifications());
+                    teacherMap.put("subject", teacher.getSubject());
+                    return ResponseEntity.ok(teacherMap);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+
+
     @PostMapping
     public ResponseEntity<Map<String, Object>> createTeacher(@RequestBody Map<String, String> data) {
         if (userRepository.existsByUsername(data.get("username"))) {
