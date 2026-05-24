@@ -26,55 +26,41 @@ public class AuthService {
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
-        // validationEmailAlreadyAvailable
         if (userRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email bereits registriert");
+            throw new IllegalArgumentException("Email already registered");
         }
-
-        // validationUsernameAlreadyAvailable
         if (userRepository.existsByUsername(request.username())) {
-            throw new IllegalArgumentException("Benutzername bereits vergeben");
+            throw new IllegalArgumentException("Username already taken");
         }
 
-        // createUserEntity
         UserEntity user = new UserEntity();
         user.setUsername(request.username());
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setProvider("local"); // normalRegistration
-
-        // save
+        user.setRole("ROLE_STUDENT");
         UserEntity savedUser = userRepository.save(user);
 
-        // returnResponseWithoutPassword
-        return new UserResponse(
-                savedUser.getId(),
-                savedUser.getUsername(),
-                savedUser.getEmail()
-        );
+        return new UserResponse(savedUser.getId(),
+                savedUser.getUsername(), 
+                savedUser.getEmail());
     }
 
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
-        // searchForUsersEitherByUsernameOrEmail
         UserEntity user = userRepository.findByUsername(request.usernameOrEmail())
                 .or(() -> userRepository.findByEmail(request.usernameOrEmail()))
-                .orElseThrow(() -> new IllegalArgumentException("Ungültige Anmeldedaten"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid login details"));
 
-        // checkPassword
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Ungültige Anmeldedaten");
+        if (user.getIsActive() != null && !user.getIsActive()) {
+            throw new IllegalArgumentException("Account is locked or disabled due to violation.");
         }
 
-        // generateJWTToken
-        String token = jwtUtil.generateToken(user.getUsername());
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Invalid login details");
+        }
 
-        // returnResponse
-        return new LoginResponse(
-                token,
-                user.getId(),
-                user.getUsername(),
-                user.getEmail()
-        );
+        String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+
+        return new LoginResponse(token, user.getId(), user.getUsername(), user.getEmail());
     }
 }

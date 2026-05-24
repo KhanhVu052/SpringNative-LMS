@@ -57,10 +57,10 @@ public class EnrollmentController {
     public ResponseEntity<Map<String, String>> unenrollUser(@PathVariable Long enrollmentId) {
         try {
             enrollmentService.unenrollUser(enrollmentId);
-            return ResponseEntity.ok(Map.of("message", "Erfolgreich abgemeldet"));
+            return ResponseEntity.ok(Map.of("message", "Successfully logged out"));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Fehler beim Abmelden"));
+                    .body(Map.of("error", "Error logging out"));
         }
     }
 

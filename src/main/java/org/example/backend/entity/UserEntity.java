@@ -21,26 +21,32 @@ public class UserEntity {
     @Column(nullable = false, length = 255)
     private String email;
 
-    @Column(length = 60) // nullableFürOAuth2Users
+    @Column(length = 60)
     private String passwordHash;
 
-    @Column(length = 20) // z.B. "github", "google", "linkedin", "local"
+    @Column(length = 20)
     private String provider;
 
-    @Column(length = 255) // OAuth2 Provider User ID
+    @Column(length = 255)
     private String providerId;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    public UserEntity() {} // noArgsConstructorForJPA
+    @Column(length = 20, nullable = false)
+    private String role = "ROLE_STUDENT";
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
+    public UserEntity() {}
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
     }
 
-    // Getter/Setter
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -61,4 +67,10 @@ public class UserEntity {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+
+    public Boolean getIsActive() { return isActive; }
+    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
 }

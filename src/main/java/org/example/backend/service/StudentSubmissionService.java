@@ -1,8 +1,8 @@
 package org.example.backend.service;
 
-import org.example.backend.entity.SeminarEntity;
+import org.example.backend.entity.CourseEntity;
 import org.example.backend.entity.StudentSubmissionEntity;
-import org.example.backend.repository.SeminarRepository;
+import org.example.backend.repository.CourseRepository;
 import org.example.backend.repository.StudentSubmissionRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,26 +20,25 @@ import java.util.UUID;
 public class StudentSubmissionService {
 
     private final StudentSubmissionRepository submissionRepository;
-    private final SeminarRepository seminarRepository;
+    private final CourseRepository courseRepository;
 
     @Value("${file.upload.dir:uploads/submissions}")
     private String uploadDir;
 
-    public StudentSubmissionService(StudentSubmissionRepository submissionRepository,
-                                    SeminarRepository seminarRepository) {
+    public StudentSubmissionService(StudentSubmissionRepository submissionRepository, CourseRepository courseRepository) {
         this.submissionRepository = submissionRepository;
-        this.seminarRepository = seminarRepository;
+        this.courseRepository = courseRepository;
     }
 
     // Link-Submission (YouTube, GitHub, etc.)
     @Transactional
-    public StudentSubmissionEntity submitLink(Long seminarId, Long studentId, String studentName,
+    public StudentSubmissionEntity submitLink(Long courseId, Long studentId, String studentName,
                                               String title, String description, String url) {
-        SeminarEntity seminar = seminarRepository.findById(seminarId)
-                .orElseThrow(() -> new RuntimeException("Seminar not found"));
+        CourseEntity course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
 
         StudentSubmissionEntity submission = new StudentSubmissionEntity();
-        submission.setSeminar(seminar);
+        submission.setCourse(course);
         submission.setStudentId(studentId);
         submission.setStudentName(studentName);
         submission.setTitle(title);
@@ -50,12 +49,12 @@ public class StudentSubmissionService {
         return submissionRepository.save(submission);
     }
 
-    // File-Submission (Bild, Video, Dokument)
+    // File-Submission (Image, Video, Document)
     @Transactional
-    public StudentSubmissionEntity submitFile(Long seminarId, Long studentId, String studentName,
+    public StudentSubmissionEntity submitFile(Long courseId, Long studentId, String studentName,
                                               String title, String description, MultipartFile file) throws IOException {
-        SeminarEntity seminar = seminarRepository.findById(seminarId)
-                .orElseThrow(() -> new RuntimeException("Seminar not found"));
+        CourseEntity course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
 
         // createUploadDirectory
         Path uploadPath = Paths.get(uploadDir);
@@ -74,7 +73,7 @@ public class StudentSubmissionService {
         StudentSubmissionEntity.SubmissionType submissionType = determineSubmissionType(file.getContentType());
 
         StudentSubmissionEntity submission = new StudentSubmissionEntity();
-        submission.setSeminar(seminar);
+        submission.setCourse(course); // Sửa thành setCourse
         submission.setStudentId(studentId);
         submission.setStudentName(studentName);
         submission.setTitle(title);
@@ -87,16 +86,16 @@ public class StudentSubmissionService {
         return submissionRepository.save(submission);
     }
 
-    public List<StudentSubmissionEntity> getSubmissionsBySeminar(Long seminarId) {
-        return submissionRepository.findBySeminarIdOrderBySubmissionTimeDesc(seminarId);
+    public List<StudentSubmissionEntity> getSubmissionsByCourse(Long courseId) {
+        return submissionRepository.findByCourseIdOrderBySubmissionTimeDesc(courseId);
     }
 
-    public List<StudentSubmissionEntity> getSubmissionsByStudent(Long studentId, Long seminarId) {
-        return submissionRepository.findByStudentIdAndSeminarId(studentId, seminarId);
+    public List<StudentSubmissionEntity> getSubmissionsByStudent(Long studentId, Long courseId) {
+        return submissionRepository.findByStudentIdAndCourseId(studentId, courseId);
     }
 
     @Transactional
-    public StudentSubmissionEntity gradSubmission(Long submissionId, String feedback, Integer grade) {
+    public StudentSubmissionEntity gradeSubmission(Long submissionId, String feedback, Integer grade) {
         StudentSubmissionEntity submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found"));
 
@@ -118,20 +117,17 @@ public class StudentSubmissionService {
                 Files.delete(filePath);
             }
         }
-
         submissionRepository.delete(submission);
     }
 
-    public long getSubmissionCount(Long seminarId) {
-        return submissionRepository.countBySeminarId(seminarId);
+    public long getSubmissionCount(Long courseId) {
+        return submissionRepository.countByCourseId(courseId);
     }
 
     private StudentSubmissionEntity.SubmissionType determineSubmissionType(String contentType) {
         if (contentType == null) return StudentSubmissionEntity.SubmissionType.DOCUMENT;
-
         if (contentType.startsWith("image/")) return StudentSubmissionEntity.SubmissionType.IMAGE;
         if (contentType.startsWith("video/")) return StudentSubmissionEntity.SubmissionType.VIDEO;
-
         return StudentSubmissionEntity.SubmissionType.DOCUMENT;
     }
 }

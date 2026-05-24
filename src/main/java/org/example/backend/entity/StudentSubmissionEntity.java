@@ -12,8 +12,8 @@ public class StudentSubmissionEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seminar_id", nullable = false)
-    private SeminarEntity seminar;
+    @JoinColumn(name = "course_id", nullable = false)
+    private CourseEntity course;
 
     @Column(name = "student_id", nullable = false)
     private Long studentId;
@@ -55,18 +55,23 @@ public class StudentSubmissionEntity {
     }
 
     public enum SubmissionType {
-        LINK,       // YouTube, GitHub, etc.
-        IMAGE,      // Hochgeladenes Bild
-        VIDEO,      // Hochgeladenes Video
-        DOCUMENT    // PDF, Word, etc.
+        LINK,
+        IMAGE,
+        VIDEO,
+        DOCUMENT
     }
 
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public SeminarEntity getSeminar() { return seminar; }
-    public void setSeminar(SeminarEntity seminar) { this.seminar = seminar; }
+    public CourseEntity getCourse() {
+        return course;
+    }
+
+    public void setCourse(CourseEntity course) {
+        this.course = course;
+    }
 
     public Long getStudentId() { return studentId; }
     public void setStudentId(Long studentId) { this.studentId = studentId; }

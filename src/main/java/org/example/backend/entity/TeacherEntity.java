@@ -33,6 +33,10 @@ public class TeacherEntity {
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private UserEntity user;
+
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();
@@ -62,4 +66,7 @@ public class TeacherEntity {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public UserEntity getUser() { return user; }
+    public void setUser(UserEntity user) { this.user = user; }
 }
