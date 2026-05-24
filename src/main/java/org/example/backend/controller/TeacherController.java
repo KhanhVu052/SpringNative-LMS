@@ -25,8 +25,8 @@ public class TeacherController {
     private final PasswordEncoder passwordEncoder;
 
     public TeacherController(TeacherRepository teacherRepository,
-                             UserRepository userRepository,
-                             PasswordEncoder passwordEncoder) {
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder) {
         this.teacherRepository = teacherRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -69,7 +69,6 @@ public class TeacherController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-
     @PostMapping
     public ResponseEntity<Map<String, Object>> createTeacher(@RequestBody Map<String, String> data) {
         if (userRepository.existsByUsername(data.get("username"))) {
@@ -109,8 +108,7 @@ public class TeacherController {
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> updateTeacher(
             @PathVariable Long id,
-            @RequestBody Map<String, String> updates
-    ) {
+            @RequestBody Map<String, String> updates) {
         return teacherRepository.findById(id)
                 .map(teacher -> {
                     if (updates.containsKey("firstName")) {

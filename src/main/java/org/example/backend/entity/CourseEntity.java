@@ -28,6 +28,10 @@ public class CourseEntity {
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LearningPathEntity> learningPaths = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teacher_id")
+    private TeacherEntity teacher;
+
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();
@@ -51,4 +55,7 @@ public class CourseEntity {
 
     public List<LearningPathEntity> getLearningPaths() { return learningPaths; }
     public void setLearningPaths(List<LearningPathEntity> learningPaths) { this.learningPaths = learningPaths; }
+
+    public TeacherEntity getTeacher() { return teacher; }
+    public void setTeacher(TeacherEntity teacher) { this.teacher = teacher; }
 }

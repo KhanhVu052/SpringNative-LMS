@@ -380,6 +380,12 @@ public class CourseController {
         }
     }
 
+    @GetMapping("/teacher/{teacherId}/stats")
+    public ResponseEntity<List<Map<String, Object>>> getTeacherStats(@PathVariable Long teacherId) {
+        List<Map<String, Object>> stats = courseService.getTeacherStats(teacherId);
+        return ResponseEntity.ok(stats);
+    }
+
 
 // --- CÁC ENDPOINT QUẢN LÝ BÀI NỘP VÀ CHẤM ĐIỂM ---
 

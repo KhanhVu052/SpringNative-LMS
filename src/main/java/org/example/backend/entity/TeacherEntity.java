@@ -3,6 +3,7 @@ package org.example.backend.entity;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "teachers")
@@ -37,6 +38,9 @@ public class TeacherEntity {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private UserEntity user;
 
+    @OneToMany(mappedBy = "teacher")
+    private List<CourseEntity> courses;
+
     @PrePersist
     protected void onCreate() {
         createdAt = Instant.now();
@@ -69,4 +73,7 @@ public class TeacherEntity {
 
     public UserEntity getUser() { return user; }
     public void setUser(UserEntity user) { this.user = user; }
+
+    public List<CourseEntity> getCourses() { return courses; }
+    public void setCourses(List<CourseEntity> courses) { this.courses = courses; }
 }
