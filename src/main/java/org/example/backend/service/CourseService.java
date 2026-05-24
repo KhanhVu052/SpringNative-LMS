@@ -10,6 +10,7 @@ import org.example.backend.repository.LearningContentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Map;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +31,26 @@ public class CourseService {
         this.learningPathRepository = learningPathRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.learningContentRepository = learningContentRepository;
+    }
+
+
+    public List<Map<String, Object>> getTeacherStats(Long teacherId) {
+        List<CourseEntity> courses = courseRepository.findByTeacherId(teacherId);
+
+        if (courses.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        return courses.stream().map(course -> {
+            Map<String, Object> statMap = new java.util.HashMap<>();
+            statMap.put("courseId", course.getId());
+            statMap.put("courseName", course.getName());
+
+            long studentCount = enrollmentRepository.countByCourseId(course.getId());
+            statMap.put("studentCount", studentCount);
+
+            return statMap;
+        }).collect(java.util.stream.Collectors.toList());
     }
 
     public List<CourseEntity> getAllCourses() {

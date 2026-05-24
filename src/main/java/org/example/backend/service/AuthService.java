@@ -10,6 +10,8 @@ import org.example.backend.util.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @Service
 public class AuthService {
@@ -62,5 +64,9 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
 
         return new LoginResponse(token, user.getId(), user.getUsername(), user.getEmail());
+    }
+
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(ex.getMessage());
     }
 }
