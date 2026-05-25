@@ -42,8 +42,8 @@ export default function Statistic({ navigation }: { navigation: any }) {
         try {
             if (showLoadingIndicator) setLoading(true);
             setError(null);
-            
-            const res = await fetch(`${BASE_URL}/api/statistic`, {
+
+            const res = await fetch(`${BASE_URL}/api/admin/statistics`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
@@ -55,7 +55,7 @@ export default function Statistic({ navigation }: { navigation: any }) {
             }
 
             const data = await res.json();
-            
+
             // Map keys flexibly to handle diverse backend models
             const teachers = data.teachers ?? data.teacher ?? data.teacherCount ?? 0;
             const students = data.students ?? data.student ?? data.studentCount ?? 0;

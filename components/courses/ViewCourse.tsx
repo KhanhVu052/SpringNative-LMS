@@ -27,40 +27,7 @@ export default function ViewCourse() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [deviceIp, setDeviceIp] = useState('');
 
-    // Network.getIpAddressAsync().then(ip => {
-    //     if (ip) setDeviceIp(ip);
-    //     console.log('deviceIp', deviceIp);
-    // });
-    // useEffect(() => {
-    //     Network.getIpAddressAsync().then(ip => {
-    //         if (ip) setDeviceIp(ip);
-    //         console.log('deviceIp', deviceIp);
-    //     });
-    // }, []);
-
-    // useEffect(() => {
-    //     const getIp = async () => {
-    //         try {
-    //             const ip = await Network.getIpAddressAsync();
-    //             setDeviceIp(ip);
-    //             // Log trực tiếp biến 'ip' vừa lấy được để kiểm tra
-    //             console.log('IP lấy được từ hệ thống:', ip);
-    //         } catch (e) {
-    //             console.error('Lỗi khi lấy IP:', e);
-    //         }
-    //     };
-
-    //     getIp();
-    // }, []);
-
-    // // Theo dõi khi deviceIp thay đổi thực sự
-    // useEffect(() => {
-    //     if (deviceIp) {
-    //         console.log('State deviceIp đã cập nhật:', deviceIp);
-    //     }
-    // }, [deviceIp]);
     const fetchCourses = async () => {
         if (!token) return;
         try {

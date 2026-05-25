@@ -29,6 +29,7 @@ import CreateTeacher from './components/admin/CreateTeacher';
 import TeacherDetails from './components/admin/TeacherDetails';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { UserProvider, useUser } from './context/UserContext';
+import Login from './components/profile/Login';
 
 const Stack = createNativeStackNavigator();
 
@@ -246,35 +247,47 @@ function HomeScreen({ navigation }: { navigation: any }) {
   );
 }
 
+function AppNavigator() {
+  const { token } = useUser();
+
+  if (!token) {
+    return <Login />;
+  }
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: true }}>
+        <Stack.Screen name="home" component={HomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="courses" component={ViewCourse} options={{ headerShown: false }} />
+        <Stack.Screen name="course" component={ViewCourseDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="create-course" component={CreateCourse} options={{ headerShown: false }} />
+        <Stack.Screen name="edit-delete-course" component={EditDeleteCourse} options={{ headerShown: false }} />
+        <Stack.Screen name="profile" component={Profile} options={{ headerShown: false }} />
+        <Stack.Screen name="edit-profile" component={EditProfile} options={{ headerShown: false }} />
+        <Stack.Screen name="my-courses" component={MyCourse} options={{ headerShown: false }} />
+        <Stack.Screen name="learning-paths" component={LearningPath} options={{ headerShown: false }} />
+        <Stack.Screen name="edit-delete-path" component={EditDeletePath} options={{ headerShown: false }} />
+        <Stack.Screen name="create-path" component={CreatePath} options={{ headerShown: false }} />
+        <Stack.Screen name="create-lesson" component={CreateLesson} options={{ headerShown: false }} />
+        <Stack.Screen name="lesson-detail" component={LessonDetail} options={{ headerShown: false }} />
+        <Stack.Screen name="grading" component={Grading} options={{ headerShown: false }} />
+        <Stack.Screen name="search-courses" component={SearchCourse} options={{ headerShown: false }} />
+        <Stack.Screen name="statistic" component={Statistic} options={{ headerShown: false }} />
+        <Stack.Screen name="users-list" component={UsersList} options={{ headerShown: false }} />
+        <Stack.Screen name="user-detail" component={UserDetail} options={{ headerShown: false }} />
+        <Stack.Screen name="teachers-list" component={TeachersList} options={{ headerShown: false }} />
+        <Stack.Screen name="create-teacher" component={CreateTeacher} options={{ headerShown: false }} />
+        <Stack.Screen name="teacher-details" component={TeacherDetails} options={{ headerShown: false }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   return (
     <UserProvider>
       <SafeAreaProvider>
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: true }}>
-            <Stack.Screen name="home" component={HomeScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="courses" component={ViewCourse} options={{ headerShown: false }} />
-            <Stack.Screen name="course" component={ViewCourseDetails} options={{ headerShown: false }} />
-            <Stack.Screen name="create-course" component={CreateCourse} options={{ headerShown: false }} />
-            <Stack.Screen name="edit-delete-course" component={EditDeleteCourse} options={{ headerShown: false }} />
-            <Stack.Screen name="profile" component={Profile} options={{ headerShown: false }} />
-            <Stack.Screen name="edit-profile" component={EditProfile} options={{ headerShown: false }} />
-            <Stack.Screen name="my-courses" component={MyCourse} options={{ headerShown: false }} />
-            <Stack.Screen name="learning-paths" component={LearningPath} options={{ headerShown: false }} />
-            <Stack.Screen name="edit-delete-path" component={EditDeletePath} options={{ headerShown: false }} />
-            <Stack.Screen name="create-path" component={CreatePath} options={{ headerShown: false }} />
-            <Stack.Screen name="create-lesson" component={CreateLesson} options={{ headerShown: false }} />
-            <Stack.Screen name="lesson-detail" component={LessonDetail} options={{ headerShown: false }} />
-            <Stack.Screen name="grading" component={Grading} options={{ headerShown: false }} />
-            <Stack.Screen name="search-courses" component={SearchCourse} options={{ headerShown: false }} />
-            <Stack.Screen name="statistic" component={Statistic} options={{ headerShown: false }} />
-            <Stack.Screen name="users-list" component={UsersList} options={{ headerShown: false }} />
-            <Stack.Screen name="user-detail" component={UserDetail} options={{ headerShown: false }} />
-            <Stack.Screen name="teachers-list" component={TeachersList} options={{ headerShown: false }} />
-            <Stack.Screen name="create-teacher" component={CreateTeacher} options={{ headerShown: false }} />
-            <Stack.Screen name="teacher-details" component={TeacherDetails} options={{ headerShown: false }} />
-          </Stack.Navigator>
-        </NavigationContainer>
+        <AppNavigator />
       </SafeAreaProvider>
     </UserProvider>
   );
