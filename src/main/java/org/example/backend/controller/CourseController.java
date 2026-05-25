@@ -36,6 +36,13 @@ public class CourseController {
             courseMap.put("name", course.getName());
             courseMap.put("description", course.getDescription());
 
+            if (course.getTeacher() != null) {
+                courseMap.put("instructor",
+                        course.getTeacher().getFirstName() + " " + course.getTeacher().getLastName());
+            } else {
+                courseMap.put("instructor", "Unknown Instructor");
+            }
+
             List<Map<String, Object>> paths = course.getLearningPaths().stream().map(path -> {
                 Map<String, Object> pathMap = new HashMap<>();
                 pathMap.put("id", path.getId());
@@ -62,6 +69,13 @@ public class CourseController {
                     courseMap.put("name", course.getName());
                     courseMap.put("description", course.getDescription());
 
+                    if (course.getTeacher() != null) {
+                        courseMap.put("instructor",
+                                course.getTeacher().getFirstName() + " " + course.getTeacher().getLastName());
+                    } else {
+                        courseMap.put("instructor", "Unknown Instructor");
+                    }
+
                     List<Map<String, Object>> paths = course.getLearningPaths().stream().map(path -> {
                         Map<String, Object> pathMap = new HashMap<>();
                         pathMap.put("id", path.getId());
@@ -86,6 +100,13 @@ public class CourseController {
                     courseMap.put("id", course.getId());
                     courseMap.put("name", course.getName());
                     courseMap.put("description", course.getDescription());
+
+                    if (course.getTeacher() != null) {
+                        courseMap.put("instructor",
+                                course.getTeacher().getFirstName() + " " + course.getTeacher().getLastName());
+                    } else {
+                        courseMap.put("instructor", "Unknown Instructor");
+                    }
 
                     List<Map<String, Object>> paths = course.getLearningPaths().stream().map(path -> {
                         Map<String, Object> pathMap = new HashMap<>();
@@ -149,7 +170,8 @@ public class CourseController {
             Integer durationWeeks = (Integer) request.get("durationWeeks");
             String overview = (String) request.get("overview");
 
-            LearningPathEntity path = courseService.createLearningPath(courseId, level, points, durationWeeks, overview);
+            LearningPathEntity path = courseService.createLearningPath(courseId, level, points, durationWeeks,
+                    overview);
 
             Map<String, Object> response = new HashMap<>();
             response.put("id", path.getId());
@@ -178,7 +200,8 @@ public class CourseController {
             Integer durationWeeks = (Integer) request.get("durationWeeks");
             String overview = (String) request.get("overview");
 
-            LearningPathEntity path = courseService.updateLearningPath(courseId, pathId, level, points, durationWeeks, overview, description);
+            LearningPathEntity path = courseService.updateLearningPath(courseId, pathId, level, points, durationWeeks,
+                    overview, description);
 
             Map<String, Object> response = new HashMap<>();
             response.put("id", path.getId());
@@ -239,7 +262,8 @@ public class CourseController {
         try {
             long studentCount = courseService.getEnrollmentCount(id);
             if (studentCount > 0) {
-                CourseEntity course = courseService.getCourseById(id).orElseThrow(() -> new RuntimeException("Course not found"));
+                CourseEntity course = courseService.getCourseById(id)
+                        .orElseThrow(() -> new RuntimeException("Course not found"));
                 course.setStatus("HIDDEN");
                 courseService.updateCourse(id, course);
                 Map<String, String> response = new HashMap<>();
@@ -259,7 +283,8 @@ public class CourseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> updateCourse(@PathVariable Long id, @RequestBody CourseEntity courseUpdate) {
+    public ResponseEntity<Map<String, Object>> updateCourse(@PathVariable Long id,
+            @RequestBody CourseEntity courseUpdate) {
         try {
             CourseEntity updated = courseService.updateCourse(id, courseUpdate);
             Map<String, Object> courseMap = new HashMap<>();
@@ -308,8 +333,7 @@ public class CourseController {
             Integer orderIndex = (Integer) request.get("orderIndex");
 
             LearningContentEntity content = courseService.createContent(
-                    pathId, title, type, description, contentUrl, points, orderIndex
-            );
+                    pathId, title, type, description, contentUrl, points, orderIndex);
 
             Map<String, Object> response = new HashMap<>();
             response.put("id", content.getId());
@@ -343,8 +367,7 @@ public class CourseController {
             Integer orderIndex = (Integer) request.get("orderIndex");
 
             LearningContentEntity content = courseService.updateContent(
-                    contentId, title, type, description, contentUrl, points, orderIndex
-            );
+                    contentId, title, type, description, contentUrl, points, orderIndex);
 
             Map<String, Object> response = new HashMap<>();
             response.put("id", content.getId());
@@ -386,12 +409,12 @@ public class CourseController {
         return ResponseEntity.ok(stats);
     }
 
-
-// --- CÁC ENDPOINT QUẢN LÝ BÀI NỘP VÀ CHẤM ĐIỂM ---
+    // --- CÁC ENDPOINT QUẢN LÝ BÀI NỘP VÀ CHẤM ĐIỂM ---
 
     @GetMapping("/{courseId}/submissions")
     public ResponseEntity<List<Map<String, Object>>> getSubmissions(@PathVariable Long courseId) {
-        List<org.example.backend.entity.StudentSubmissionEntity> submissions = studentSubmissionService.getSubmissionsByCourse(courseId);
+        List<org.example.backend.entity.StudentSubmissionEntity> submissions = studentSubmissionService
+                .getSubmissionsByCourse(courseId);
 
         // Bóc tách dữ liệu để tránh lỗi vòng lặp JSON
         List<Map<String, Object>> response = submissions.stream().map(sub -> {
@@ -425,8 +448,7 @@ public class CourseController {
                 request.get("studentName").toString(),
                 request.get("title").toString(),
                 request.get("description").toString(),
-                request.get("url").toString()
-        );
+                request.get("url").toString());
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", submission.getId());
@@ -440,7 +462,7 @@ public class CourseController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping(value = "/{courseId}/submissions/file", consumes = {"multipart/form-data"})
+    @PostMapping(value = "/{courseId}/submissions/file", consumes = { "multipart/form-data" })
     public ResponseEntity<?> submitFile(
             @PathVariable Long courseId,
             @RequestParam("studentId") Long studentId,
@@ -454,8 +476,8 @@ public class CourseController {
         }
 
         try {
-            org.example.backend.entity.StudentSubmissionEntity submission =
-                    studentSubmissionService.submitFile(courseId, studentId, studentName, title, description, file);
+            org.example.backend.entity.StudentSubmissionEntity submission = studentSubmissionService
+                    .submitFile(courseId, studentId, studentName, title, description, file);
 
             java.util.Map<String, Object> response = new java.util.HashMap<>();
             response.put("id", submission.getId());
@@ -470,7 +492,8 @@ public class CourseController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Error when saving file: " + e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(java.util.Map.of("error", "Error when saving file: " + e.getMessage()));
         }
     }
 
@@ -482,7 +505,8 @@ public class CourseController {
         String feedback = body.get("instructorFeedback").toString();
         Integer grade = Integer.valueOf(body.get("grade").toString());
 
-        org.example.backend.entity.StudentSubmissionEntity updatedSubmission = studentSubmissionService.gradeSubmission(submissionId, feedback, grade);
+        org.example.backend.entity.StudentSubmissionEntity updatedSubmission = studentSubmissionService
+                .gradeSubmission(submissionId, feedback, grade);
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", updatedSubmission.getId());
