@@ -65,7 +65,7 @@ export default function LessonDetail({ route, navigation }: { route: any; naviga
             setLoading(true);
             setError(null);
             const res = await fetch(
-                `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents/${contentId}`,
+                `${BASE_URL}/api/courses/${courseId}/paths/${pathId}/contents`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -73,7 +73,11 @@ export default function LessonDetail({ route, navigation }: { route: any; naviga
                 }
             );
             if (!res.ok) throw new Error(`Server error: ${res.status}`);
-            const data = await res.json();
+            const list = await res.json();
+            const data = list.find((item: any) => String(item.id) === String(contentId));
+            if (!data) {
+                throw new Error('Lesson not found on this learning path.');
+            }
             const mapped: LessonData = {
                 id: data.id ?? 0,
                 title: data.title || 'Untitled',

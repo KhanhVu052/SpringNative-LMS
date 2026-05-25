@@ -85,16 +85,6 @@ export default function Statistic({ navigation }: { navigation: any }) {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" backgroundColor="#F8F9FD" />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
-                    <Ionicons name="arrow-back" size={24} color="#1E293B" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>System Stats</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('my-courses')} style={styles.headerBtn}>
-                    <Ionicons name="home" size={24} color="#1E293B" />
-                </TouchableOpacity>
-            </View>
 
             {loading && !refreshing ? (
                 <View style={styles.center}>

@@ -29,8 +29,10 @@ import CreateTeacher from './components/admin/CreateTeacher';
 import TeacherDetails from './components/admin/TeacherDetails';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { UserProvider, useUser } from './context/UserContext';
-import Login from './components/profile/Login';
-
+import Login from './frontend-mobile/app/login';
+import AdminDashboard from './components/admin/AdminDashboard';
+import StudentMyCoursesScreen from './frontend-mobile/app/my-courses';
+import register from './frontend-mobile/app/register';
 const Stack = createNativeStackNavigator();
 
 const EMOJIS = ['🔵', '🟣', '🟠', '🟢', '🔴', '🟡'];
@@ -130,30 +132,6 @@ function HomeScreen({ navigation }: { navigation: any }) {
           />
         </View>
 
-        {/* Featured Courses */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuredContainer}>
-          <View style={[styles.courseCard, { backgroundColor: '#ADD8E6' }]}>
-            <Text style={styles.courseTitle}>Basic English for Class XIII</Text>
-            <Text style={styles.courseSubtitle}>28 Lessons</Text>
-          </View>
-          <View style={[styles.courseCard, { backgroundColor: '#DDA0DD' }]}>
-            <Text style={styles.courseTitle}>General Knowledge</Text>
-            <Text style={styles.courseSubtitle}>28 Lessons</Text>
-          </View>
-        </ScrollView>
-
-        {/* Where You Left */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Where You Left</Text>
-          <View style={styles.progressCard}>
-            <Feather name="target" size={24} color="#5B67F8" style={styles.progressIcon} />
-            <View>
-              <Text style={styles.progressTitle}>How to get started</Text>
-              <Text style={styles.progressSubtitle}>You can start from where you left</Text>
-            </View>
-            <Text style={styles.progressPercent}>60%</Text>
-          </View>
-        </View>
 
         {/* Recommended */}
         <View style={styles.section}>
@@ -214,12 +192,6 @@ function HomeScreen({ navigation }: { navigation: any }) {
             </ScrollView>
           )}
         </View>
-        <View>
-          <Button title="MyCourse" onPress={() => navigation.navigate('my-courses')} />
-          <Button title="Statistic" onPress={() => navigation.navigate('statistic')} />
-          <Button title="UsersList" onPress={() => navigation.navigate('users-list')} />
-          <Button title="TeachersList" onPress={() => navigation.navigate('teachers-list')} />
-        </View>
       </ScrollView>
 
       {/* Bottom Navigation */}
@@ -247,6 +219,29 @@ function HomeScreen({ navigation }: { navigation: any }) {
   );
 }
 
+
+function RoutingScreen({ navigation }: { navigation: any }) {
+  const { role } = useUser();
+
+  useEffect(() => {
+    if (!role) return;
+    if (role === 'ROLE_ADMIN' || role.includes('ADMIN')) {
+      navigation.replace('admin-dashboard');
+    } else if (role === 'ROLE_TEACHER' || role.includes('TEACHER') || role.includes('INSTRUCTOR')) {
+      navigation.replace('my-courses');
+    } else {
+      navigation.replace('student-my-courses');
+    }
+  }, [role]);
+
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }}>
+      <ActivityIndicator size="large" color="#6366F1" />
+      <Text style={{ marginTop: 16, color: '#4F46E5', fontWeight: '700', fontSize: 16 }}>Loading profile...</Text>
+    </View>
+  );
+}
+
 function AppNavigator() {
   const { token } = useUser();
 
@@ -257,14 +252,17 @@ function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: true }}>
+        <Stack.Screen name="routing" component={RoutingScreen} options={{ headerShown: false }} />
         <Stack.Screen name="home" component={HomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="admin-dashboard" component={AdminDashboard} options={{ headerShown: false }} />
+        <Stack.Screen name="my-courses" component={MyCourse} options={{ headerShown: false }} />
+        <Stack.Screen name="student-my-courses" component={StudentMyCoursesScreen} options={{ headerShown: false }} />
         <Stack.Screen name="courses" component={ViewCourse} options={{ headerShown: false }} />
         <Stack.Screen name="course" component={ViewCourseDetails} options={{ headerShown: false }} />
         <Stack.Screen name="create-course" component={CreateCourse} options={{ headerShown: false }} />
         <Stack.Screen name="edit-delete-course" component={EditDeleteCourse} options={{ headerShown: false }} />
         <Stack.Screen name="profile" component={Profile} options={{ headerShown: false }} />
         <Stack.Screen name="edit-profile" component={EditProfile} options={{ headerShown: false }} />
-        <Stack.Screen name="my-courses" component={MyCourse} options={{ headerShown: false }} />
         <Stack.Screen name="learning-paths" component={LearningPath} options={{ headerShown: false }} />
         <Stack.Screen name="edit-delete-path" component={EditDeletePath} options={{ headerShown: false }} />
         <Stack.Screen name="create-path" component={CreatePath} options={{ headerShown: false }} />
@@ -278,6 +276,7 @@ function AppNavigator() {
         <Stack.Screen name="teachers-list" component={TeachersList} options={{ headerShown: false }} />
         <Stack.Screen name="create-teacher" component={CreateTeacher} options={{ headerShown: false }} />
         <Stack.Screen name="teacher-details" component={TeacherDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="register" component={register} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

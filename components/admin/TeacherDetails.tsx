@@ -81,7 +81,7 @@ export default function TeacherDetails({ route, navigation }: { route: any; navi
             }
 
             const data = await res.json();
-            
+
             setFirstName(data.firstName ?? '');
             setLastName(data.lastName ?? '');
             setBirthDate(data.birthDate ?? '');
@@ -205,9 +205,6 @@ export default function TeacherDetails({ route, navigation }: { route: any; navi
                     <Ionicons name="arrow-back" size={24} color="#1E293B" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Teacher Details</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('my-courses')} style={styles.headerBtn}>
-                    <Ionicons name="home" size={24} color="#1E293B" />
-                </TouchableOpacity>
             </View>
 
             {loading ? (
@@ -236,7 +233,7 @@ export default function TeacherDetails({ route, navigation }: { route: any; navi
 
                     {/* Form Controls */}
                     <Text style={styles.sectionTitle}>Identity Fields</Text>
-                    
+
                     <View style={styles.formCard}>
                         {/* First Name */}
                         <View style={styles.formGroup}>
@@ -274,10 +271,10 @@ export default function TeacherDetails({ route, navigation }: { route: any; navi
                                 <Text style={[styles.dateText, !birthDate && styles.datePlaceholder]}>
                                     {birthDate
                                         ? parseDate(birthDate).toLocaleDateString('en-GB', {
-                                              day: '2-digit',
-                                              month: 'short',
-                                              year: 'numeric',
-                                          })
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric',
+                                        })
                                         : 'Select date of birth...'}
                                 </Text>
                             </TouchableOpacity>
@@ -307,7 +304,7 @@ export default function TeacherDetails({ route, navigation }: { route: any; navi
                     </View>
 
                     <Text style={styles.sectionTitle}>Syllabus & Qualification</Text>
-                    
+
                     <View style={styles.formCard}>
                         {/* Subject */}
                         <View style={styles.formGroup}>
@@ -391,9 +388,11 @@ const styles = StyleSheet.create({
     },
     headerBtn: {
         padding: 4,
+        flex: 1,
     },
     headerTitle: {
         fontSize: 18,
+        flex: 6,
         fontWeight: '700',
         color: '#1E293B',
     },

@@ -1,28 +1,87 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
 import { FontAwesome, Feather } from '@expo/vector-icons';
+
+// Dynamically resolve expo-router to support standard React Navigation environments
+let useRouter: any = () => ({ replace: () => { }, push: () => { }, back: () => { } });
+let Stack: any = null;
+try {
+  const expoRouter = require("expo-router");
+  useRouter = expoRouter.useRouter;
+  Stack = expoRouter.Stack;
+} catch (e) {
+  // Not inside expo-router
+}
+
 import { useCourseContext } from './context/CourseContext';
 
 export default function MyCoursesScreen() {
-  const router = useRouter();
-  const { enrolled } = useCourseContext();
+  let router: any;
+  try {
+    router = useRouter();
+  } catch (e) {
+    router = { replace: () => { }, push: () => { }, back: () => { } };
+  }
 
-  // We are removing API call and using global state to match the user's flow
-  
+  const courseContext = useCourseContext();
+  const enrolled = courseContext ? courseContext.enrolled : [];
+
+  let parentUserContext: any = null;
+  try {
+    const { useUser } = require("../../context/UserContext");
+    parentUserContext = useUser();
+  } catch (e) {
+    // Outside parent UserContext
+  }
+
+  const [parentCourses, setParentCourses] = React.useState<any[]>([]);
+  const [parentLoading, setParentLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchParentCourses = async () => {
+      if (!parentUserContext || !parentUserContext.token) return;
+      try {
+        setParentLoading(true);
+        const res = await fetch('http://10.0.2.2:8080/api/courses', {
+          headers: {
+            'Authorization': `Bearer ${parentUserContext.token}`
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // Map to match the card structure
+          const mapped = data.map((item: any, index: number) => ({
+            id: String(item.id || index),
+            title: item.name || item.title || 'Untitled Course',
+            author: item.instructor || item.instructorName || 'By Instructor',
+            color: '#5D5FEF',
+            progress: index % 2 !== 0 ? 100 : 75
+          }));
+          setParentCourses(mapped);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch parent courses:', err);
+      } finally {
+        setParentLoading(false);
+      }
+    };
+    fetchParentCourses();
+  }, [parentUserContext?.token]);
+
+  const displayCourses = parentUserContext ? parentCourses : enrolled;
+
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+      {Stack && !parentUserContext && (
+        <Stack.Screen options={{ headerShown: false }} />
+      )}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <FontAwesome name="angle-left" size={24} color="#101828" />
-        </Pressable>
         <Text style={styles.headerTitle}>My Courses</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {!Array.isArray(enrolled) || enrolled.length === 0 ? (
+        {!Array.isArray(displayCourses) || displayCourses.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIcon}>
               <FontAwesome name="folder-open" size={48} color="#94A3B8" />
@@ -34,15 +93,15 @@ export default function MyCoursesScreen() {
             </Pressable>
           </View>
         ) : (
-          enrolled?.map((course, index) => {
+          displayCourses?.map((course, index) => {
             // Mocking progress for demonstration. E.g. every second course is completed.
             const progress = course.progress || (index % 2 !== 0 ? 100 : 75);
             const isCompleted = progress === 100;
             const iconBg = course.color || (isCompleted ? '#A855F7' : '#5D5FEF');
 
             return (
-              <Pressable 
-                key={course.id} 
+              <Pressable
+                key={course.id}
                 style={styles.courseCard}
                 onPress={() => router.push(`/course/dashboard/${course.id}` as any)}
               >
@@ -53,11 +112,11 @@ export default function MyCoursesScreen() {
                     <Feather name="play" size={32} color="#FFFFFF" />
                   )}
                 </View>
-                
+
                 <View style={styles.courseInfo}>
                   <Text style={styles.courseTitle} numberOfLines={1}>{course.title}</Text>
                   <Text style={styles.courseAuthor}>{course.author || 'By Instructor'}</Text>
-                  
+
                   {isCompleted ? (
                     <View style={styles.completedBadge}>
                       <FontAwesome name="check-circle-o" size={14} color="#10B981" />

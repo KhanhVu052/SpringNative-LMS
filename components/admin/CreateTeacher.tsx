@@ -130,13 +130,7 @@ export default function CreateTeacher({ navigation }: { navigation: any }) {
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
-                    <Ionicons name="arrow-back" size={24} color="#1E293B" />
-                </TouchableOpacity>
                 <Text style={styles.headerTitle}>Add New Teacher</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('my-courses')} style={styles.headerBtn}>
-                    <Ionicons name="home" size={24} color="#1E293B" />
-                </TouchableOpacity>
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -222,10 +216,10 @@ export default function CreateTeacher({ navigation }: { navigation: any }) {
                             <Text style={[styles.dateText, !birthDate && styles.datePlaceholder]}>
                                 {birthDate
                                     ? parseDate(birthDate).toLocaleDateString('en-GB', {
-                                          day: '2-digit',
-                                          month: 'short',
-                                          year: 'numeric',
-                                      })
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                    })
                                     : 'Select date of birth...'}
                             </Text>
                         </TouchableOpacity>

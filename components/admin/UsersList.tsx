@@ -146,18 +146,6 @@ export default function UsersList({ navigation }: { navigation: any }) {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F8F9FD" />
-
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
-                    <Ionicons name="arrow-back" size={24} color="#1E293B" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>User Management</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('my-courses')} style={styles.headerBtn}>
-                    <Ionicons name="home" size={24} color="#1E293B" />
-                </TouchableOpacity>
-            </View>
 
             {/* Search Input */}
             <View style={styles.searchSection}>

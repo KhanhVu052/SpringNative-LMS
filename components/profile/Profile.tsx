@@ -24,11 +24,16 @@ const BASE_URL = 'http://10.0.2.2:8080';
 
 export default function Profile({ navigation }: ProfileProps) {
   const [activeTab, setActiveTab] = useState('profile');
-  const { userId, token } = useUser();
+  const { userId, token, setToken, setUserId } = useUser();
 
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [userLoading, setUserLoading] = useState(true);
   const [userError, setUserError] = useState<string | null>(null);
+
+  const handleLogout = () => {
+    setToken(undefined);
+    setUserId('');
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -131,6 +136,16 @@ export default function Profile({ navigation }: ProfileProps) {
             ))}
           </View>
         </View>
+
+        {/* Logout Button */}
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+          activeOpacity={0.8}
+        >
+          <FontAwesome5 name="sign-out-alt" size={18} color="#EF4444" />
+          <Text style={styles.logoutButtonText}>Log Out</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Bottom Navigation */}
@@ -351,5 +366,22 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FEE2E2',
+    borderWidth: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 24,
+    gap: 8,
+  },
+  logoutButtonText: {
+    color: '#EF4444',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

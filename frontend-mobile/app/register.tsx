@@ -1,7 +1,17 @@
+import React, { useState } from "react";
 import { FontAwesome } from "@expo/vector-icons";
 import axios from "axios";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+
+// Dynamically resolve expo-router to support standard React Navigation environments
+let useRouter: any = () => ({ replace: () => { }, push: () => { } });
+let Stack: any = null;
+try {
+  const expoRouter = require("expo-router");
+  useRouter = expoRouter.useRouter;
+  Stack = expoRouter.Stack;
+} catch (e) {
+  // Not inside expo-router
+}
 
 import {
     Alert,
@@ -17,7 +27,46 @@ import {
 import { API_BASE_URL } from "./config";
 
 export default function RegisterScreen() {
-  const router = useRouter();
+  let parentUserContext: any = null;
+  try {
+    const { useUser } = require("../../context/UserContext");
+    parentUserContext = useUser();
+  } catch (e) {
+    // Outside parent UserContext
+  }
+
+  let router: any;
+  if (parentUserContext) {
+    try {
+      const { useNavigation } = require("@react-navigation/native");
+      const nav = useNavigation();
+      router = {
+        replace: (path: string) => {
+          if (path.includes("login")) {
+            try { nav.goBack(); } catch (e) { }
+          } else {
+            nav.navigate(path.replace("/", ""));
+          }
+        },
+        push: (path: string) => {
+          if (path.includes("login")) {
+            try { nav.goBack(); } catch (e) { }
+          } else {
+            nav.navigate(path.replace("/", ""));
+          }
+        }
+      };
+    } catch (e) {
+      router = { replace: () => { }, push: () => { } };
+    }
+  } else {
+    try {
+      router = useRouter();
+    } catch (e) {
+      router = { replace: () => { }, push: () => { } };
+    }
+  }
+
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");

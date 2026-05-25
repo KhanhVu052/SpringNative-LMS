@@ -181,17 +181,12 @@ export default function UserDetail({ route, navigation }: { route: any; navigati
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
         >
-            <StatusBar barStyle="dark-content" backgroundColor="#F8F9FD" />
-
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
                     <Ionicons name="arrow-back" size={24} color="#1E293B" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>User Details</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('my-courses')} style={styles.headerBtn}>
-                    <Ionicons name="home" size={24} color="#1E293B" />
-                </TouchableOpacity>
             </View>
 
             {loading ? (
@@ -338,9 +333,13 @@ const styles = StyleSheet.create({
     },
     headerBtn: {
         padding: 4,
+        flex: 1,
+        textAlign: 'center',
     },
     headerTitle: {
+        flex: 6,
         fontSize: 18,
+        paddingLeft: 12,
         fontWeight: '700',
         color: '#1E293B',
     },

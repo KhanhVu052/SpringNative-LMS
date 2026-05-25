@@ -1,7 +1,17 @@
 import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { useRouter, Stack } from "expo-router";
+// Dynamically resolve expo-router to support standard React Navigation environments
+let useRouter: any = () => ({ replace: () => { }, push: () => { } });
+let Stack: any = null;
+try {
+  const expoRouter = require("expo-router");
+  useRouter = expoRouter.useRouter;
+  Stack = expoRouter.Stack;
+} catch (e) {
+  // Not inside expo-router
+}
+
 import { useCourseContext } from "./context/CourseContext";
 import { useState } from "react";
 import {
@@ -13,18 +23,77 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { API_BASE_URL } from "./config";
 
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
+import { useNavigation } from "@react-navigation/native";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
-  const router = useRouter();
-  const { login } = useCourseContext();
+  let parentUserContext: any = null;
+  try {
+    const { useUser } = require("../../context/UserContext");
+    parentUserContext = useUser();
+  } catch (e) {
+    // Outside parent UserContext
+  }
+
+  const resolveUserRole = (data: any) => {
+    if (!data) return 'ROLE_STUDENT';
+    const roleVal = data.role || data.roleName || '';
+    if (roleVal) return roleVal;
+
+    const uName = (data.username || '').toLowerCase();
+    const uEmail = (data.email || '').toLowerCase();
+
+    if (uName === 'admin' || uEmail.includes('admin')) {
+      return 'ROLE_ADMIN';
+    }
+    if (uName.includes('teacher') || uName.includes('instructor') || uEmail.includes('teacher') || uEmail.includes('instructor')) {
+      return 'ROLE_TEACHER';
+    }
+    return 'ROLE_STUDENT';
+  };
+
+  let router: any;
+  if (parentUserContext) {
+    try {
+      const { useNavigation } = require("@react-navigation/native");
+      const nav = useNavigation();
+      router = {
+        replace: (path: string) => {
+          if (path.includes("register")) {
+            nav.navigate("register");
+          } else {
+            nav.navigate(path.replace("/", ""));
+          }
+        },
+        push: (path: string) => {
+          if (path.includes("register")) {
+            nav.navigate("register");
+          } else {
+            nav.navigate(path.replace("/", ""));
+          }
+        }
+      };
+    } catch (e) {
+      router = { replace: () => { }, push: () => { } };
+    }
+  } else {
+    try {
+      router = useRouter();
+    } catch (e) {
+      router = { replace: () => { }, push: () => { } };
+    }
+  }
+
+  const courseContext = useCourseContext();
+  const login = courseContext ? courseContext.login : () => { };
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,7 +101,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!usernameOrEmail || !password) {
-      Alert.alert("Lỗi", "Vui lòng điền đầy đủ email và mật khẩu.");
+      Alert.alert("Error", "Please fill in your username/email and password.");
       return;
     }
 
@@ -45,20 +114,29 @@ export default function LoginScreen() {
 
       const { token, id, username, email } = response.data;
 
-      
+
       await AsyncStorage.setItem("token", token);
       await AsyncStorage.setItem(
         "user",
         JSON.stringify({ id, username, email }),
       );
-      
+
       login({ id, username, email });
 
-      Alert.alert("Thành công", "Đăng nhập thành công!");
+      if (parentUserContext) {
+        if (parentUserContext.setToken) parentUserContext.setToken(token);
+        if (parentUserContext.setUserId) parentUserContext.setUserId(String(id));
+        if (parentUserContext.setRole) {
+          const resolvedRole = resolveUserRole({ username, email, role: response.data?.role, roleName: response.data?.roleName });
+          parentUserContext.setRole(resolvedRole);
+        }
+      }
+
+      Alert.alert("Successful", "Logged in successfully!");
       router.replace("/(tabs)");
     } catch (error: any) {
       console.log("Login Error:", error);
-      let message = "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
+      let message = "Login failed. Please check your information.";
 
       if (error.response?.data?.message) {
         message = error.response.data.message;
@@ -72,15 +150,15 @@ export default function LoginScreen() {
 
   const handleGoogleLogin = async () => {
     try {
-      const redirectUrl = Linking.createURL('campus'); 
-      const loginUrl = `${API_BASE_URL}/api/auth/oauth2-init?provider=google&app_redirect=${encodeURIComponent(redirectUrl)}`; 
+      const redirectUrl = Linking.createURL('campus');
+      const loginUrl = `${API_BASE_URL}/api/auth/oauth2-init?provider=google&app_redirect=${encodeURIComponent(redirectUrl)}`;
 
       const result = await WebBrowser.openAuthSessionAsync(loginUrl, redirectUrl);
 
       if (result.type === 'success') {
         const url = result.url;
         const parsedUrl = Linking.parse(url);
-        
+
         // Bóc tách tham số từ query parameters
         const token = parsedUrl.queryParams?.token as string;
         const username = parsedUrl.queryParams?.username as string;
@@ -91,30 +169,40 @@ export default function LoginScreen() {
         if (token) {
           await AsyncStorage.setItem('token', token);
           await AsyncStorage.setItem('user', JSON.stringify({ id, username, email }));
-          
+
           login({ id, username, email });
-          
-          Alert.alert("Thành công", "Đăng nhập Google thành công!");
+
+          if (parentUserContext) {
+            if (parentUserContext.setToken) parentUserContext.setToken(token);
+            if (parentUserContext.setUserId) parentUserContext.setUserId(String(id));
+            if (parentUserContext.setRole) {
+              const roleParam = parsedUrl.queryParams?.role as string;
+              const resolvedRole = resolveUserRole({ username, email, role: roleParam });
+              parentUserContext.setRole(resolvedRole);
+            }
+          }
+
+          Alert.alert("Successful", "Logged in with Google successfully!");
           router.replace("/(tabs)");
         }
       }
     } catch (error) {
-      console.error("Lỗi đăng nhập OAuth2: ", error);
-      Alert.alert("Lỗi", "Đăng nhập Google thất bại.");
+      console.error("Error logging in with Google: ", error);
+      Alert.alert("Error", "Login with Google failed.");
     }
   };
 
   const handleGithubLogin = async () => {
     try {
-      const redirectUrl = Linking.createURL('campus'); 
-      const loginUrl = `${API_BASE_URL}/api/auth/oauth2-init?provider=github&app_redirect=${encodeURIComponent(redirectUrl)}`; 
+      const redirectUrl = Linking.createURL('campus');
+      const loginUrl = `${API_BASE_URL}/api/auth/oauth2-init?provider=github&app_redirect=${encodeURIComponent(redirectUrl)}`;
 
       const result = await WebBrowser.openAuthSessionAsync(loginUrl, redirectUrl);
 
       if (result.type === 'success') {
         const url = result.url;
         const parsedUrl = Linking.parse(url);
-        
+
         // Bóc tách tham số từ query parameters
         const token = parsedUrl.queryParams?.token as string;
         const username = parsedUrl.queryParams?.username as string;
@@ -125,16 +213,26 @@ export default function LoginScreen() {
         if (token) {
           await AsyncStorage.setItem('token', token);
           await AsyncStorage.setItem('user', JSON.stringify({ id, username, email }));
-          
+
           login({ id, username, email });
-          
-          Alert.alert("Thành công", "Đăng nhập GitHub thành công!");
+
+          if (parentUserContext) {
+            if (parentUserContext.setToken) parentUserContext.setToken(token);
+            if (parentUserContext.setUserId) parentUserContext.setUserId(String(id));
+            if (parentUserContext.setRole) {
+              const roleParam = parsedUrl.queryParams?.role as string;
+              const resolvedRole = resolveUserRole({ username, email, role: roleParam });
+              parentUserContext.setRole(resolvedRole);
+            }
+          }
+
+          Alert.alert("Successful", "Logged in with GitHub successfully!");
           router.replace("/(tabs)");
         }
       }
     } catch (error) {
-      console.error("Lỗi đăng nhập OAuth2: ", error);
-      Alert.alert("Lỗi", "Đăng nhập GitHub thất bại.");
+      console.error("Error logging in with GitHub: ", error);
+      Alert.alert("Error", "Login with GitHub failed.");
     }
   };
 
@@ -143,15 +241,17 @@ export default function LoginScreen() {
       style={styles.flex}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Stack.Screen 
-        options={{
-          headerLeft: () => (
-            <Pressable onPress={() => router.replace('/(tabs)')} style={{ padding: 8, marginLeft: Platform.OS === 'ios' ? -8 : 0 }}>
-              <FontAwesome name="arrow-left" size={20} color="#101828" />
-            </Pressable>
-          ),
-        }} 
-      />
+      {Stack && !parentUserContext && (
+        <Stack.Screen
+          options={{
+            headerLeft: () => (
+              <Pressable onPress={() => router.replace('/(tabs)')} style={{ padding: 8, marginLeft: Platform.OS === 'ios' ? -8 : 0 }}>
+                <FontAwesome name="arrow-left" size={20} color="#101828" />
+              </Pressable>
+            ),
+          }}
+        />
+      )}
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.container}
@@ -168,13 +268,13 @@ export default function LoginScreen() {
 
         <Text style={styles.heading}>Log in</Text>
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>Username or Email</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter email"
+            placeholder="Enter username or email"
             value={usernameOrEmail}
             onChangeText={setUsernameOrEmail}
-            keyboardType="email-address"
+            keyboardType="default"
             autoCapitalize="none"
             placeholderTextColor="#94A3B8"
           />
@@ -248,9 +348,11 @@ export default function LoginScreen() {
 
         <View style={styles.footerRow}>
           <Text style={styles.footerText}>Don't have an account? </Text>
-          <Pressable onPress={() => router.push("/register")}>
+          <TouchableOpacity onPress={() => {
+            router.push('/register'); // <-- Đổi thành router.push hoặc router.replace tùy bạn
+          }}>
             <Text style={styles.footerLink}>Register</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

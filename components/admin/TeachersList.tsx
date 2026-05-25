@@ -137,20 +137,13 @@ export default function TeachersList({ navigation }: { navigation: any }) {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="#F8F9FD" />
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn}>
-                    <Ionicons name="arrow-back" size={24} color="#1E293B" />
-                </TouchableOpacity>
                 <Text style={styles.headerTitle}>Instructors</Text>
                 <View style={styles.headerActions}>
                     <TouchableOpacity onPress={() => navigation.navigate('create-teacher')} style={styles.headerBtn}>
                         <Ionicons name="add-circle-outline" size={25} color="#10B981" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => navigation.navigate('my-courses')} style={styles.headerBtn}>
-                        <Ionicons name="home" size={24} color="#1E293B" />
                     </TouchableOpacity>
                 </View>
             </View>
